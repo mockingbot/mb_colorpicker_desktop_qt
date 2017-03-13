@@ -1,0 +1,13 @@
+
+# exclude tmp build dir
+tmp/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc

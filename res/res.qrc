@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="Res">
+    <file alias="CircleMask">Artboard220.png</file>
+    <file alias="CircleMask@2">Artboard440.png</file>
+</qresource>
+</RCC>
