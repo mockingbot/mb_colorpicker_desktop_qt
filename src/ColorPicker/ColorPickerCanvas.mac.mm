@@ -8,8 +8,6 @@
 
 #include <QtMacExtras/QtMacExtras>
 
-#include <QtGui/5.8.0/QtGui/qpa/qplatformnativeinterface.h>
-
 
 template<>
 void Hack::MakeWindowOverMenubar<Hack::OS::macOS>(WId window)
@@ -112,12 +110,6 @@ void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 /////////////////////////////////////////////////////////////////////////////////
 void CaptureImageSurroundCursor()
 {
-    typedef QImage(*CGImageToQImageFunction)(CGImageRef image);
-
-    static auto cgimagetoqimage = reinterpret_cast<CGImageToQImageFunction>( \
-                                    QGuiApplication::platformNativeInterface()-> \
-                                    nativeResourceFunctionForIntegration("cgimagetoqimage"));
-
     auto window_list = ::CGWindowListCreate(kCGWindowListOptionOnScreenOnly, \
                                             kCGNullWindowID);
 
@@ -155,9 +147,7 @@ void CaptureImageSurroundCursor()
     auto image = ::CGWindowListCreateImageFromArray(rect, window_list_filtered, \
                                                     kCGWindowImageNominalResolution);
 
-    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = cgimagetoqimage(image);
-
-    auto pixmap = QtMac::fromCGImageRef(image);
+    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = QtMac::fromCGImageRef(image).toImage();
 
     TRACK_CURSOR_PROCESS_START_STATE = true;
 
