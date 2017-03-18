@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 #include <QtWidgets/QtWidgets>
 
 
@@ -14,10 +12,18 @@ private:
     ~ColorPickerCanvas();
 private:
     void mousePressEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
 private:
-    const QPixmap m_pixmap_circle_mask;
+    const QPixmap m_pixmap_circle_mask_x1;
     const QPixmap m_pixmap_circle_mask_x2;
+private:
+    QPixmap m_pixmap_circle_mask;
+private:
+    void drawGrid(QPainter& painter);
+    void drawCross(QPainter& painter);
+    void drawCaptureImage(QPainter& painter);
+    void setCircleClipRegion(QPainter& painter);
 private:
     const QImage& m_current_capture_image;
 private:
@@ -39,6 +45,26 @@ public:
     {
         move(x - PANEL_WIDTH/2, y - ColorPickerCanvas::PANEL_HIGHT/2);
     }
+private:
+    float m_device_pixel_ratio = 1.0;
+public:
+    void updateDevicePixelRatio(const float devicePixelRatio)
+    {
+        if( m_device_pixel_ratio == devicePixelRatio ){
+            return;
+        }
+        #ifdef Q_OS_WIN
+            return; // do nothing on Windows
+        #endif // Q_OS_WIN
+
+        if( devicePixelRatio == 2.0 ){
+            m_pixmap_circle_mask = m_pixmap_circle_mask_x2;
+        } else {
+            m_pixmap_circle_mask = m_pixmap_circle_mask_x1;
+        }
+        m_device_pixel_ratio = devicePixelRatio;
+        update();
+    }
 };
 
 
@@ -50,6 +76,9 @@ private:
     ~ColorPickerHost();
 private:
     ColorPickerCanvas* m_color_picker_canvas = nullptr;
+private:
+    QVector<QRect> m_screen_geometry_list;
+    QVector<float> m_screen_device_pixel_ratio_list;
 public:
     static ColorPickerHost* Instance();
 public:
@@ -93,10 +122,11 @@ namespace Hack
     #define DECLARE_FUNCTION_FOR_OS(RETURN_TYPE, FUN, ...)                \
         template <typename OS_TYPE> RETURN_TYPE FUN(__VA_ARGS__);         \
         template <> inline RETURN_TYPE FUN<OS::NotCurrent>(__VA_ARGS__) { \
-            using rt = typename std::decay<RETURN_TYPE>::type; \
-            return rt();\
+            return RETURN_TYPE();\
         } \
 
+
+    DECLARE_FUNCTION_FOR_OS(void, SetWindowFocus, WId);
 
     DECLARE_FUNCTION_FOR_OS(void, MakeWindowOverMenubar, WId);
     DECLARE_FUNCTION_FOR_OS(void, ExcluedWindowFromPictureTraceProcess, WId);
@@ -105,7 +135,7 @@ namespace Hack
     DECLARE_FUNCTION_FOR_OS(void, ShutdonwProcessForTrackPictureSurroundCursor);
 
     DECLARE_FUNCTION_FOR_OS(bool, IsTrackCursorProcessStarted);
-    DECLARE_FUNCTION_FOR_OS(const QImage&, GetPictureSurroundedCurrentCursor);
+    DECLARE_FUNCTION_FOR_OS(void, GetPictureSurroundedCurrentCursor, QImage**);
 
     DECLARE_FUNCTION_FOR_OS(void, GetCurrentCursorPosition, int*, int*);
 

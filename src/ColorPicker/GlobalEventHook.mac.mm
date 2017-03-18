@@ -12,12 +12,9 @@ CGEventRef MouseEventCallback(CGEventTapProxy proxy, CGEventType type, \
                                             CGEventRef event, void * refcon)
 {
     auto mouseLocation = CGEventGetLocation(event);
+
     auto x = (int)mouseLocation.x;
     auto y = (int)mouseLocation.y;
-
-    /* qt qcursor bug */
-    qDebug() << QCursor::pos() ;
-    printf("Mouse (%d,%d)\n", x, y);
 
     GetGlobalEventHook()->MouseMove(x, y);
 
@@ -69,4 +66,3 @@ void OS::Hack::UnhookMouse()
     CFRelease(MOUSE_EVENT_TAP);
 }
 
-////////////////////////////////////////////////////////////////////////////////

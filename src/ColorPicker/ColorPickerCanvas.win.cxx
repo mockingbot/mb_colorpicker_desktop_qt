@@ -6,13 +6,25 @@
 #include <functional>
 #include <unordered_map>
 
-#include <atomic>
 #include <mutex>
+#include <atomic>
 
 #include <Windows.h>
 #include <Magnification.h>
 
 #pragma comment(lib, "MAGNIFICATION.lib")
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+
+template<>
+void Hack::SetWindowFocus<Hack::OS::Current>(WId window)
+{
+    ::SetFocus(HWND(window));
+}
+
+/////////////////////////////////////////////////////////////////////////////////
 
 template<>
 void Hack::GetCurrentCursorPosition<Hack::OS::Current>(int* x, int* y)
@@ -22,6 +34,8 @@ void Hack::GetCurrentCursorPosition<Hack::OS::Current>(int* x, int* y)
     *x =  cursor_pos.x;
     *y =  cursor_pos.y;
 }
+
+/////////////////////////////////////////////////////////////////////////////////
 
 // the magnification api can only exclude some window, 20 is enough for us
 std::atomic<uint32_t> EXCLUDE_WINDOW_COUNT{0};
@@ -47,7 +61,7 @@ bool Hack::IsTrackCursorProcessStarted<Hack::OS::Windows>()
 const int CAPTURE_WIDTH = 18;
 const int CAPTURE_HIGHT = 18;
 
-QImage INIT_CAPTURED_SURROUND_CURSOR_IMAGE()
+QImage init_captured_surround_cursor_image()
 {
     QImage image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32);
     // image.fill(Qt::transparent);
@@ -55,14 +69,17 @@ QImage INIT_CAPTURED_SURROUND_CURSOR_IMAGE()
     return image;
 }
 
-auto CAPTURED_SURROUND_CURSOR_IMAGE = INIT_CAPTURED_SURROUND_CURSOR_IMAGE();
+QImage* CAPTURED_SURROUND_CURSOR_IMAGE_PTR;
 
 template<>
-const QImage& Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Windows>()
+void Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Windows>(QImage** ptr)
 {
-    return CAPTURED_SURROUND_CURSOR_IMAGE;
+    static auto captured_surround_cursor_image = init_captured_surround_cursor_image();
+    *ptr = &captured_surround_cursor_image;
+    CAPTURED_SURROUND_CURSOR_IMAGE_PTR = &captured_surround_cursor_image;
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 
 class ScreenCaptureHost: public QWidget
 {
@@ -76,9 +93,8 @@ private:
     HWND m_hwnd_magnifier;
 };
 
-
-/////////////////////////////////////////////////////////////////////////////////
 ScreenCaptureHost* capture_host = nullptr;
+
 
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
@@ -185,7 +201,7 @@ BOOL WINAPI CaptureCallback( HWND hWnd,
 
     bmp_data_buffer -= bmp_data_buffer_size;
 
-    CAPTURED_SURROUND_CURSOR_IMAGE = \
+    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = \
             QImage::fromData(bmp_data_buffer, bmp_data_buffer_size, "BMP");
 
     std::free(bmp_data_buffer);
@@ -309,85 +325,11 @@ ScreenCaptureHost::~ScreenCaptureHost()
     printf("%s\n", __FUNCTION__);
 }
 
-
-
-
-
-static const char * xmp_mouse_cursor_mask [] = {
-    "25 25 2 1",
-    "* c #000000", // 0 means transparent
-    "_ c #ffffff", // >1 means unchanged
-    "_________________________", //1
-    "_________________________", //2
-    "_________________________", //3
-    "_________________________", //4
-    "_________________________", //5
-    "_________________________", //6
-    "_________________________", //7
-    "_________________________", //8
-    "_________________________", //9
-    "_________________________", //10
-    "_________________________", //11
-    "_________________________", //12
-    "_________________________", //13
-    "_________________________", //14
-    "_________________________", //15
-    "_________________________", //16
-    "_________________________", //17
-    "_________________________", //18
-    "_________________________", //19
-    "_________________________", //20
-    "_________________________", //21
-    "_________________________", //22
-    "_________________________", //23
-    "_________________________", //24
-    "_________________________", //25
-};
-
-static const char * xmp_mouse_cursor[] = {
-    "25 25 3 1",
-    "* c #000000",
-    "_ c #ff0000",
-    "0 c #ffffff",
-    "_________________________", //1
-    "_________________________", //2
-    "_________________________", //3
-    "_________________________", //4
-    "_________________________", //5
-    "_________________________", //6
-    "_________________________", //7
-    "_________________________", //8
-    "_________________________", //9
-    "_________________________", //10
-    "_________________________", //11
-    "_________________________", //12
-    "_________________________", //13
-    "_________________________", //14
-    "_________________________", //15
-    "_________________________", //16
-    "_________________________", //17
-    "_________________________", //18
-    "_________________________", //19
-    "_________________________", //20
-    "_________________________", //21
-    "_________________________", //22
-    "_________________________", //23
-    "_________________________", //24
-    "_________________________", //25
-};
+/////////////////////////////////////////////////////////////////////////////////
 
 template<>
 void Hack::HideCursor<Hack::OS::Windows>()
 {
-    QPixmap mouse_cursor_mask_pixmap = QPixmap(xmp_mouse_cursor_mask);
-    QPixmap mouse_cursor_pixmap = QPixmap(xmp_mouse_cursor);
-    QPixmap the_cursor = mouse_cursor_pixmap;
-    the_cursor.setMask(QBitmap(mouse_cursor_mask_pixmap));
-
-    // mouse_cursor_mask_pixmap.save("mouse_cursor_mask.png");
-    // mouse_cursor_pixmap.save("mouse_cursor.png");
-    // the_cursor.save("the_cursor.png");
-
-    QApplication::setOverrideCursor(QCursor(the_cursor));
+    ::ShowCursor(FALSE);
 }
 

@@ -24,5 +24,8 @@ void SetCursor();
 void HookMouse();
 void UnhookMouse();
 
+void HookKeyboard();
+void UnhookKeyboard();
+
 }// namespace Hack
 }// namespace OS

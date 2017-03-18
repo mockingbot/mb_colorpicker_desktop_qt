@@ -1,4 +1,5 @@
-cmake_minimum_required (VERSION 3.4)
+cmake_minimum_required(VERSION 3.4)
+
 
 ################################################################################
 # define our project
@@ -6,8 +7,8 @@ project(ColorPicker4MoDao)
 
 ################################################################################
 # set our executable
-# add_executable(ColorPicker4MoDao src/main.cxx)
-add_executable(ColorPicker4MoDao WIN32 src/main.cxx)
+add_executable(ColorPicker4MoDao src/main.cxx)
+# add_executable(ColorPicker4MoDao WIN32 src/main.cxx)
 # add_executable(ColorPicker4MoDao MACOSX_BUNDLE src/main.cxx)
 
 target_sources(ColorPicker4MoDao PRIVATE src/resource.cxx)
@@ -24,6 +25,8 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.mac.mm)
     target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerCanvas.mac.mm)
+    set_target_properties(ColorPicker4MoDao PROPERTIES MACOSX_BUNDLE_INFO_PLIST
+                          ${CMAKE_CURRENT_SOURCE_DIR}/res/Info.plist.in)
 endif()
 
 
@@ -34,6 +37,7 @@ include(3rd/StaticQt5Base/StaticLinkQt5.cmake)
 add_definitions(-DQT_NO_KEYWORDS)
 # auto generate moc files for the target
 smart_qt5_static_link(ColorPicker4MoDao)
+smart_qt5_static_link_os_extra(ColorPicker4MoDao)
 
 
 ################################################################################

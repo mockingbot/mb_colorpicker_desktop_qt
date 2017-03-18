@@ -18,6 +18,7 @@ LRESULT CALLBACK HookedMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
     if( wParam == WM_MOUSEMOVE ){
         GetGlobalEventHook()->MouseMove(x, y);
     }
+
     return ::CallNextHookEx(H_MOUSE_HOOK, nCode, wParam, lParam);
 }
 
