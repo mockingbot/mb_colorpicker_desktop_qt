@@ -82,8 +82,10 @@ ColorPickerCanvas::mousePressEvent(QMouseEvent* event)
     //                    );
 
     qGuiApp->clipboard()->setText(m_current_color.name().toUpper());
+    
+    printf("%s", m_current_color.name().toUpper()); // need stdout for the desktop version
 
-    qDebug() << m_current_color.name().toUpper() ;
+    qDebug() << m_current_color.name().toUpper();
 
     close();
     qGuiApp->exit(0);
