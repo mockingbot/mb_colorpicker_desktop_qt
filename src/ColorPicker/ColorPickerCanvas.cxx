@@ -69,7 +69,7 @@ ColorPickerCanvas::ColorPickerCanvas()
 ColorPickerCanvas::~ColorPickerCanvas()
 {
     // TODO:
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 }
 
 void
@@ -83,7 +83,8 @@ ColorPickerCanvas::mousePressEvent(QMouseEvent* event)
 
     qGuiApp->clipboard()->setText(m_current_color.name().toUpper());
 
-    qDebug() << m_current_color.name().toUpper() ;
+    // qDebug() << m_current_color.name().toUpper().toStdString() ;
+    printf("%s\n", m_current_color.name().toUpper().toStdString().c_str() );
 
     close();
     qGuiApp->exit(0);
@@ -251,13 +252,13 @@ ColorPickerHost::Instance()
 
 ColorPickerHost::ColorPickerHost()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
 ColorPickerHost::~ColorPickerHost()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 

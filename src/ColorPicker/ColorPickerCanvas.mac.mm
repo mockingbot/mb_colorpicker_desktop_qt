@@ -92,7 +92,7 @@ ScreenCaptureHost* capture_host = nullptr;
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     if( capture_host == nullptr ){
         capture_host = new ScreenCaptureHost;
     }
@@ -101,7 +101,7 @@ void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     if( capture_host != nullptr ){
         delete capture_host;
     }
@@ -170,7 +170,7 @@ ScreenCaptureHost::ScreenCaptureHost()
 
 ScreenCaptureHost::~ScreenCaptureHost()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
