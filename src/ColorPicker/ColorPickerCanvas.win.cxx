@@ -99,7 +99,7 @@ ScreenCaptureHost* capture_host = nullptr;
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     if( capture_host == nullptr ){
 
         if (FALSE == ::MagInitialize())
@@ -115,7 +115,7 @@ void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     if( capture_host != nullptr ){
 
         capture_host->close();
@@ -322,7 +322,7 @@ ScreenCaptureHost::ScreenCaptureHost()
 
 ScreenCaptureHost::~ScreenCaptureHost()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 }
 
 /////////////////////////////////////////////////////////////////////////////////

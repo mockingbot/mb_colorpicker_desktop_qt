@@ -7,9 +7,15 @@ project(ColorPicker4MoDao)
 
 ################################################################################
 # set our executable
-add_executable(ColorPicker4MoDao src/main.cxx)
-# add_executable(ColorPicker4MoDao WIN32 src/main.cxx)
-# add_executable(ColorPicker4MoDao MACOSX_BUNDLE src/main.cxx)
+# add_executable(ColorPicker4MoDao src/main.cxx)
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    add_executable(ColorPicker4MoDao WIN32 src/main.cxx)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    add_executable(ColorPicker4MoDao MACOSX_BUNDLE src/main.cxx)
+endif()
 
 target_sources(ColorPicker4MoDao PRIVATE src/resource.cxx)
 target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.hxx)
