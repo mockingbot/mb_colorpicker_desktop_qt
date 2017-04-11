@@ -310,4 +310,12 @@ ColorPickerHost::traceMouseMove(const int x, const int y)
     }
 
     m_color_picker_canvas->moveCenterToPosition(x, y);
+
+    /*
+     * PATCH :
+     *   sometime, this window don't get focused
+     *   so, right now, we call SetWindowFocus while we move the mouse
+     */
+    Hack::SetWindowFocus<Hack::OS::Windows>(m_color_picker_canvas->winId());
+
 }
