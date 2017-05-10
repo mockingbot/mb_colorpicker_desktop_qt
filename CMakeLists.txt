@@ -17,7 +17,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_executable(ColorPicker4MoDao MACOSX_BUNDLE src/main.cxx)
 endif()
 
-target_sources(ColorPicker4MoDao PRIVATE src/resource.cxx)
 target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.hxx)
 target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.cxx)
 target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerCanvas.hxx)
@@ -38,13 +37,14 @@ endif()
 
 ################################################################################
 # using this handle Qt5 static link
-include(3rd/StaticQt5Base/StaticLinkQt5.cmake)
+include(3rd/StaticQt5Base/SmartCute.cmake)
 # I don't like qt keywords
 add_definitions(-DQT_NO_KEYWORDS)
 # auto generate moc files for the target
-smart_qt5_static_link(ColorPicker4MoDao)
-smart_qt5_static_link_os_extra(ColorPicker4MoDao)
-
+smart_cute_static_link(ColorPicker4MoDao)
+smart_cute_static_link_os_extra(ColorPicker4MoDao)
+# auto generate resource files for the target
+smart_cute_add_resource(ColorPicker4MoDao res/resource.xml)
 
 ################################################################################
 # set our c++ compiler

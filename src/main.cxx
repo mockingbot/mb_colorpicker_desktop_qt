@@ -1,5 +1,3 @@
-#include <memory>
-
 #include <QtCore/QtCore>
 
 #include "ColorPicker/GlobalEventHook.hxx"

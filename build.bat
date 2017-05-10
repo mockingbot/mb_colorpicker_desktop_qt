@@ -12,6 +12,12 @@ if ERRORLEVEL 1 (
     exit /B
 )
 
+where /q cl
+if ERRORLEVEL 1 (
+    echo command msvc cl does not find.
+    echo make sure msvc cl is installed and placed in path.
+    exit /B
+)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 setlocal enabledelayedexpansion

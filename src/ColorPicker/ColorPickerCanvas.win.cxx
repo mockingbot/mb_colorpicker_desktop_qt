@@ -15,7 +15,6 @@
 #pragma comment(lib, "MAGNIFICATION.lib")
 
 
-
 /////////////////////////////////////////////////////////////////////////////////
 
 template<>
@@ -56,90 +55,227 @@ bool Hack::IsTrackCursorProcessStarted<Hack::OS::Windows>()
     return TRACK_CURSOR_PROCESS_START_STATE;
 }
 
-// const int CAPTURE_WIDTH = 220;
-// const int CAPTURE_HIGHT = 220;
-const int CAPTURE_WIDTH = 18;
-const int CAPTURE_HIGHT = 18;
+/////////////////////////////////////////////////////////////////////////////////
 
-QImage init_captured_surround_cursor_image()
+std::mutex CAPTURED_IMAGE_UPDATE_MUTEX;
+static QImage* CAPTURED_SURROUND_CURSOR_IMAGE_PTR;
+
+bool init_captured_surround_cursor_image()
 {
-    QImage image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32);
+    static QImage image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32);
+    CAPTURED_SURROUND_CURSOR_IMAGE_PTR = &image;
     // image.fill(Qt::transparent);
     image.fill(Qt::red);
-    return image;
+    return true;
 }
 
-QImage* CAPTURED_SURROUND_CURSOR_IMAGE_PTR;
-
 template<>
-void Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Windows>(QImage** ptr)
+void Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Windows>(QImage* ptr)
 {
-    static auto captured_surround_cursor_image = init_captured_surround_cursor_image();
-    *ptr = &captured_surround_cursor_image;
-    CAPTURED_SURROUND_CURSOR_IMAGE_PTR = &captured_surround_cursor_image;
+    static auto inited = init_captured_surround_cursor_image();
+    std::unique_lock<std::mutex> lk(CAPTURED_IMAGE_UPDATE_MUTEX);
+    (*ptr) = (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 
-class ScreenCaptureHost: public QWidget
+
+class EventFilter: public QObject, public QAbstractNativeEventFilter
 {
 public:
-    ScreenCaptureHost();
-    ~ScreenCaptureHost();
-private:
-    QTimer* m_update_timer;
-private:
-    HWND m_hwnd_host;
-    HWND m_hwnd_magnifier;
+    EventFilter()
+    {
+        printf("%s\n", __FUNCTION__);
+    }
+public:
+    ~EventFilter()
+    {
+        printf("%s\n", __FUNCTION__);
+    }
+public:
+    bool nativeEventFilter(const QByteArray&, void*, long*) final override;
 };
 
-ScreenCaptureHost* capture_host = nullptr;
+HWND HWND_QT = 0;
+HWND HWND_HOST = 0;
+HWND HWND_MAGNIFIER = 0;
 
+QTimer* MAGNIFIER_UPDATE_TIMER = nullptr;
+
+bool
+EventFilter::nativeEventFilter(const QByteArray& eventType, void* message, long* result)
+{
+    if( eventType == "windows_dispatcher_MSG"){
+        return false;
+    }
+
+    auto msg = reinterpret_cast<MSG*>(message);
+
+    // std::cout << msg->hwnd << '\t'
+    //           << msg->message << '\t'
+    //           << (void*)msg->wParam << '\t'
+    //           << (void*)msg->lParam << '\t'
+    //           << '\n';
+
+    if( (HWND_HOST == 0) && (msg->hwnd !=  HWND_QT) ){
+        *result = ::DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+        return true;
+    }
+
+    if( msg->hwnd == HWND_HOST ){
+        *result = ::DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+        return true;
+    }
+
+    return false;
+}
+
+BOOL WINAPI TheMagnifierCallback(HWND,void*,MAGIMAGEHEADER,void*,MAGIMAGEHEADER,RECT,RECT,HRGN);
 
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    // printf("%s\n", __FUNCTION__);
-    if( capture_host == nullptr ){
+    printf("%s\n", __FUNCTION__);
 
-        if (FALSE == ::MagInitialize())
-        {
-            printf("::MagInitialize Failed\n");
-            throw std::runtime_error("::MagInitialize Failed");
-        }
-
-        capture_host = new ScreenCaptureHost;
+    if (FALSE == ::MagInitialize())
+    {
+        printf("::MagInitialize Failed\n");
+        throw std::runtime_error("::MagInitialize Failed");
     }
 }
 
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    // printf("%s\n", __FUNCTION__);
-    if( capture_host != nullptr ){
+    printf("%s\n", __FUNCTION__);
 
-        capture_host->close();
-        delete capture_host;
+    MAGNIFIER_UPDATE_TIMER->stop();
+    // ::SendMessage(HWND_HOST, WM_DESTROY, 0, 0);
 
-        if (FALSE == ::MagUninitialize())
+    // if (FALSE == ::MagUninitialize())
+    // {
+    //     printf("::MagUninitialize Failed %d\n", ::GetLastError());
+    //     throw std::runtime_error("::MagUninitialize Failed");
+    // }
+}
+
+template<>
+void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
+{
+    printf("%s\n", __FUNCTION__);
+
+    HWND_QT = HWND(winId);
+
+    std::cout << HWND_QT << " << HWND_QT \n";
+
+    auto event_filter = new EventFilter;
+    qApp->installNativeEventFilter(event_filter);
+
+    auto hInstance = ::GetModuleHandle(nullptr);
+
+    std::wstring window_class_name(256, 0);
+
+    if( 0 == ::GetClassName(HWND_QT,
+                            const_cast<wchar_t*>(window_class_name.c_str()),
+                            int(window_class_name.size()) )
+        )
+    {
+        printf("::GetClassName Failed %d\n", ::GetLastError());
+        throw std::runtime_error("::GetClassName Failed");
+    }
+
+    HWND_HOST = ::CreateWindowEx(WS_EX_LAYERED,
+                                 window_class_name.c_str(),
+                                 L"ColorPickerHost",
+                                 WS_OVERLAPPEDWINDOW,
+                                 0,
+                                 0,
+                                 CAPTURE_WIDTH,
+                                 CAPTURE_HIGHT,
+                                 nullptr,
+                                 nullptr,
+                                 hInstance,
+                                 nullptr);
+    if (!HWND_HOST)
+    {
+        printf("::CreateWindow HWND_HOST Failed\n");
+        throw std::runtime_error("::CreateWindow HWND_HOST Failed");
+    }
+    std::cout << HWND_HOST << " << HWND_HOST \n";
+
+    HWND_MAGNIFIER = ::CreateWindow(WC_MAGNIFIER,
+                                    TEXT("MagnifierWidget"),
+                                    WS_CHILD | WS_VISIBLE,
+                                    0,
+                                    0,
+                                    CAPTURE_WIDTH,
+                                    CAPTURE_HIGHT,
+                                    HWND_HOST,
+                                    nullptr,
+                                    hInstance,
+                                    nullptr );
+    if (!HWND_MAGNIFIER)
+    {
+        printf("::CreateWindow HWND_MAGNIFIER Failed\n");
+        throw std::runtime_error("::CreateWindow HWND_MAGNIFIER Failed");
+    }
+    std::cout << HWND_MAGNIFIER << " << HWND_MAGNIFIER \n";
+
+    if( FALSE == ::MagSetImageScalingCallback(HWND_MAGNIFIER, TheMagnifierCallback) )
+    {
+        printf("::MagSetImageScalingCallback Failed\n");
+        throw std::runtime_error("::MagSetImageScalingCallback Failed");
+    }
+
+    MAGNIFIER_UPDATE_TIMER = new QTimer();
+
+    QObject::connect(MAGNIFIER_UPDATE_TIMER, &QTimer::timeout, []()->void
+    {
+        if( FALSE == ::MagSetWindowFilterList(HWND_MAGNIFIER,
+                                              MW_FILTERMODE_EXCLUDE,
+                                              EXCLUDE_WINDOW_COUNT,
+                                              EXCLUDE_WINDOW_LIST )
+          )
         {
-            printf("::MagUninitialize Failed\n");
-            throw std::runtime_error("::MagUninitialize Failed");
+            printf("::MagSetWindowFilterList Failed\n");
+            throw std::runtime_error("::MagSetWindowFilterList Failed");
         }
 
-    }
+        POINT mouse_point;
+        ::GetCursorPos(&mouse_point);
+
+        RECT source_rect;
+        source_rect.left = mouse_point.x - CAPTURE_WIDTH/2 + 1;
+        source_rect.top  = mouse_point.y - CAPTURE_HIGHT/2 + 1;
+        source_rect.right =  CAPTURE_WIDTH;
+        source_rect.bottom = CAPTURE_HIGHT;
+
+        // Set the source rectangle for the magnifier control.
+        ::MagSetWindowSource(HWND_MAGNIFIER, source_rect);
+
+        // Force redraw.
+        ::InvalidateRect(HWND_MAGNIFIER, NULL, TRUE);
+    });
+
+    MAGNIFIER_UPDATE_TIMER->setSingleShot(false);
+    MAGNIFIER_UPDATE_TIMER->setInterval(50); // 20 hz
+    MAGNIFIER_UPDATE_TIMER->start();
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////
 
 // TODO: performace improve
-BOOL WINAPI CaptureCallback( HWND hWnd,
-                             void* srcdata, MAGIMAGEHEADER srcheader,
-                             void* destdata, MAGIMAGEHEADER destheader,
-                             RECT unclipped, RECT clipped,
-                             HRGN dirty
-                            )
+BOOL WINAPI TheMagnifierCallback(HWND hWnd, \
+                                 void* srcdata, MAGIMAGEHEADER srcheader, \
+                                 void* destdata, MAGIMAGEHEADER destheader, \
+                                 RECT unclipped, RECT clipped, \
+                                 HRGN dirty)
 {
+    // printf("%s\n", __FUNCTION__);
+    // TRACK_CURSOR_PROCESS_START_STATE = true;
+    // return true;
+
     BITMAPINFOHEADER bmif;
     // Setup the bitmap info header
     bmif.biSize = sizeof(BITMAPINFOHEADER);
@@ -201,8 +337,11 @@ BOOL WINAPI CaptureCallback( HWND hWnd,
 
     bmp_data_buffer -= bmp_data_buffer_size;
 
-    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = \
+    {
+        std::unique_lock<std::mutex> lk(CAPTURED_IMAGE_UPDATE_MUTEX);
+        (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = \
             QImage::fromData(bmp_data_buffer, bmp_data_buffer_size, "BMP");
+    }
 
     std::free(bmp_data_buffer);
 
@@ -222,107 +361,6 @@ BOOL WINAPI CaptureCallback( HWND hWnd,
     // Set the flag to say that the callback function is finished
     TRACK_CURSOR_PROCESS_START_STATE = true;
     return TRUE;
-}
-
-ScreenCaptureHost::ScreenCaptureHost()
-    :QWidget(nullptr, Qt::Tool)
-    //
-    ,m_update_timer(new QTimer(this))
-{
-    setAutoFillBackground(false);
-
-    // setAttribute(Qt::WA_DeleteOnClose);
-
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_TransparentForMouseEvents);
-
-    setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
-
-    setFixedSize(CAPTURE_WIDTH, CAPTURE_HIGHT);
-
-    m_hwnd_host = HWND(winId());
-
-    // must set this
-    ::SetLayeredWindowAttributes(m_hwnd_host, 0, 255, LWA_ALPHA);
-
-    // Create a magnifier control that fills the client area.
-    RECT mag_window_rect;
-    ::GetClientRect(m_hwnd_host, &mag_window_rect);
-
-    m_hwnd_magnifier = ::CreateWindow(WC_MAGNIFIER,
-                            TEXT("MagnifierWidget"),
-                            WS_CHILD | WS_VISIBLE,
-                            mag_window_rect.left,      // x
-                            mag_window_rect.top,       // y
-                            mag_window_rect.right,     // width
-                            mag_window_rect.bottom,    // hight
-                            m_hwnd_host,               // parent window
-                            nullptr,                   // menu
-                            GetModuleHandle(nullptr),  // hInstance
-                            nullptr                    // lpParam
-                        );
-
-    if (!m_hwnd_magnifier)
-    {
-        printf("::CreateWindow Failed\n");
-        throw std::runtime_error("::CreateWindow Failed");
-    }
-
-    // Set the magnification factor.
-    MAGTRANSFORM matrix;
-    memset(&matrix, 0, sizeof(matrix));
-    matrix.v[0][0] = 1;
-    matrix.v[1][1] = 1;
-    matrix.v[2][2] = 1.0f;
-
-    if( FALSE == ::MagSetWindowTransform(m_hwnd_magnifier, &matrix) )
-    {
-        printf("::MagSetWindowTransform Failed\n");
-        throw std::runtime_error("::MagSetWindowTransform Failed");
-    }
-
-    if( FALSE == ::MagSetImageScalingCallback(m_hwnd_magnifier, CaptureCallback) )
-    {
-        printf("::MagSetImageScalingCallback Failed\n");
-        throw std::runtime_error("::MagSetImageScalingCallback Failed");
-    }
-
-    connect(m_update_timer, &QTimer::timeout, [=]()->void
-    {
-        if( FALSE == ::MagSetWindowFilterList( m_hwnd_magnifier,
-                                               MW_FILTERMODE_EXCLUDE,
-                                               EXCLUDE_WINDOW_COUNT,
-                                               EXCLUDE_WINDOW_LIST )
-          )
-        {
-            printf("::MagSetWindowFilterList Failed\n");
-            throw std::runtime_error("::MagSetWindowFilterList Failed");
-        }
-
-        POINT mouse_point;
-        ::GetCursorPos(&mouse_point);
-
-        RECT source_rect;
-        source_rect.left = mouse_point.x - CAPTURE_WIDTH/2;
-        source_rect.top  = mouse_point.y - CAPTURE_HIGHT/2;
-        source_rect.right = source_rect.left + CAPTURE_WIDTH;
-        source_rect.bottom = source_rect.top + CAPTURE_HIGHT;
-
-        // Set the source rectangle for the magnifier control.
-        ::MagSetWindowSource(m_hwnd_magnifier, source_rect);
-
-        // Force redraw.
-        ::InvalidateRect(m_hwnd_magnifier, NULL, TRUE);
-    });
-
-    m_update_timer->setSingleShot(false);
-    m_update_timer->setInterval(50); // 20 hz
-    m_update_timer->start();
-}
-
-ScreenCaptureHost::~ScreenCaptureHost()
-{
-    // printf("%s\n", __FUNCTION__);
 }
 
 /////////////////////////////////////////////////////////////////////////////////

@@ -1,12 +1,5 @@
 #include "ColorPickerCanvas.hxx"
 
-const QImage& GetPictureSurroundedCurrentCursor()
-{
-    QImage* ptr;
-    Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Current>(&ptr);
-    return (*ptr);
-}
-
 ColorPickerCanvas::ColorPickerCanvas()
     :QWidget(nullptr, Qt::Tool)
     //
@@ -17,7 +10,7 @@ ColorPickerCanvas::ColorPickerCanvas()
     //
     // ,m_color_info_label(new QLabel(this))
     //
-    ,m_current_capture_image(GetPictureSurroundedCurrentCursor())
+    ,m_current_capture_image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32)
     //
 {
     setAutoFillBackground(false);
@@ -30,6 +23,8 @@ ColorPickerCanvas::ColorPickerCanvas()
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
 
     Hack::MakeWindowOverMenubar<Hack::OS::macOS>(winId());
+
+    Hack::BootMagnificationHost<Hack::OS::Windows>(winId());
 
     Hack::ExcluedWindowFromPictureTraceProcess<Hack::OS::Current>(winId());
 
@@ -57,13 +52,13 @@ ColorPickerCanvas::ColorPickerCanvas()
 
     auto update_timer = new QTimer(this);
     connect(update_timer, &QTimer::timeout, [=](){
+        Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Current>(&m_current_capture_image);
         m_current_color = m_current_capture_image.pixelColor(18/2-1, 18/2-1);
         // m_color_info_label->setText(m_current_color.name().toUpper());
         update();
     });
     update_timer->setSingleShot(false);
-    update_timer->start(20); // 50 hz
-
+    update_timer->start(50); // 20 hz
 }
 
 ColorPickerCanvas::~ColorPickerCanvas()
@@ -84,7 +79,7 @@ ColorPickerCanvas::mousePressEvent(QMouseEvent* event)
     qGuiApp->clipboard()->setText(m_current_color.name().toUpper());
 
     // qDebug() << m_current_color.name().toUpper().toStdString() ;
-    printf("%s\n", m_current_color.name().toUpper().toStdString().c_str() );
+    printf("%s\n", m_current_color.name().toUpper().toStdString().c_str());
 
     close();
     qGuiApp->exit(0);
@@ -252,13 +247,13 @@ ColorPickerHost::Instance()
 
 ColorPickerHost::ColorPickerHost()
 {
-    // printf("%s\n", __FUNCTION__);
+    printf("%s\n", __FUNCTION__);
     Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
 ColorPickerHost::~ColorPickerHost()
 {
-    // printf("%s\n", __FUNCTION__);
+    printf("%s\n", __FUNCTION__);
     Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
@@ -271,7 +266,7 @@ ColorPickerHost::initColorPickerForScreen(QScreen* screen)
     m_screen_geometry_list.push_back(screen->geometry());
     m_screen_device_pixel_ratio_list.push_back(screen->devicePixelRatio());
 
-    qDebug() << screen << screen->geometry() << screen->devicePixelRatio();
+    // qDebug() << screen << screen->geometry() << screen->devicePixelRatio();
 }
 
 void
