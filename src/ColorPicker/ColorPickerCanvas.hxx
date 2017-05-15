@@ -3,12 +3,6 @@
 #include <QtWidgets/QtWidgets>
 
 
-// const int CAPTURE_WIDTH = 220;
-// const int CAPTURE_HIGHT = 220;
-const int CAPTURE_WIDTH = 18;
-const int CAPTURE_HIGHT = 18;
-
-
 class ColorPickerCanvas: public QWidget
 {
     friend class ColorPickerHost;
@@ -31,7 +25,7 @@ private:
     void drawCaptureImage(QPainter& painter);
     void setCircleClipRegion(QPainter& painter);
 private:
-    QImage m_current_capture_image;
+    const QImage& m_current_capture_image;
 private:
     QColor m_current_color;
     QLabel* m_color_info_label;
@@ -142,7 +136,7 @@ namespace Hack
     DECLARE_FUNCTION_FOR_OS(void, ShutdonwProcessForTrackPictureSurroundCursor);
 
     DECLARE_FUNCTION_FOR_OS(bool, IsTrackCursorProcessStarted);
-    DECLARE_FUNCTION_FOR_OS(void, GetPictureSurroundedCurrentCursor, QImage*);
+    DECLARE_FUNCTION_FOR_OS(void, GetPictureSurroundedCurrentCursor, QImage**);
 
     DECLARE_FUNCTION_FOR_OS(void, GetCurrentCursorPosition, int*, int*);
 

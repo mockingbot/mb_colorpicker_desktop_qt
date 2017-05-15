@@ -15,6 +15,7 @@
 #pragma comment(lib, "MAGNIFICATION.lib")
 
 
+
 /////////////////////////////////////////////////////////////////////////////////
 
 template<>
@@ -55,30 +56,30 @@ bool Hack::IsTrackCursorProcessStarted<Hack::OS::Windows>()
     return TRACK_CURSOR_PROCESS_START_STATE;
 }
 
-/////////////////////////////////////////////////////////////////////////////////
+// const int CAPTURE_WIDTH = 220;
+// const int CAPTURE_HIGHT = 220;
+const int CAPTURE_WIDTH = 18;
+const int CAPTURE_HIGHT = 18;
 
-std::mutex CAPTURED_IMAGE_UPDATE_MUTEX;
-static QImage* CAPTURED_SURROUND_CURSOR_IMAGE_PTR;
-
-bool init_captured_surround_cursor_image()
+QImage init_captured_surround_cursor_image()
 {
-    static QImage image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32);
-    CAPTURED_SURROUND_CURSOR_IMAGE_PTR = &image;
+    QImage image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32);
     // image.fill(Qt::transparent);
     image.fill(Qt::red);
-    return true;
+    return image;
 }
 
+QImage* CAPTURED_SURROUND_CURSOR_IMAGE_PTR;
+
 template<>
-void Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Windows>(QImage* ptr)
+void Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Windows>(QImage** ptr)
 {
-    static auto inited = init_captured_surround_cursor_image();
-    std::unique_lock<std::mutex> lk(CAPTURED_IMAGE_UPDATE_MUTEX);
-    (*ptr) = (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR);
+    static auto captured_surround_cursor_image = init_captured_surround_cursor_image();
+    *ptr = &captured_surround_cursor_image;
+    CAPTURED_SURROUND_CURSOR_IMAGE_PTR = &captured_surround_cursor_image;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-
 
 class EventFilter: public QObject, public QAbstractNativeEventFilter
 {
@@ -337,11 +338,8 @@ BOOL WINAPI TheMagnifierCallback(HWND hWnd, \
 
     bmp_data_buffer -= bmp_data_buffer_size;
 
-    {
-        std::unique_lock<std::mutex> lk(CAPTURED_IMAGE_UPDATE_MUTEX);
-        (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = \
+    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = \
             QImage::fromData(bmp_data_buffer, bmp_data_buffer_size, "BMP");
-    }
 
     std::free(bmp_data_buffer);
 

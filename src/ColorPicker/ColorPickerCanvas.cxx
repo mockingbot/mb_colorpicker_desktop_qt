@@ -1,5 +1,12 @@
 #include "ColorPickerCanvas.hxx"
 
+const QImage& GetPictureSurroundedCurrentCursor()
+{
+    QImage* ptr;
+    Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Current>(&ptr);
+    return (*ptr);
+}
+
 ColorPickerCanvas::ColorPickerCanvas()
     :QWidget(nullptr, Qt::Tool)
     //
@@ -10,7 +17,7 @@ ColorPickerCanvas::ColorPickerCanvas()
     //
     // ,m_color_info_label(new QLabel(this))
     //
-    ,m_current_capture_image(CAPTURE_WIDTH, CAPTURE_HIGHT, QImage::Format_ARGB32)
+    ,m_current_capture_image(GetPictureSurroundedCurrentCursor())
     //
 {
     setAutoFillBackground(false);
@@ -52,7 +59,6 @@ ColorPickerCanvas::ColorPickerCanvas()
 
     auto update_timer = new QTimer(this);
     connect(update_timer, &QTimer::timeout, [=](){
-        Hack::GetPictureSurroundedCurrentCursor<Hack::OS::Current>(&m_current_capture_image);
         m_current_color = m_current_capture_image.pixelColor(18/2-1, 18/2-1);
         // m_color_info_label->setText(m_current_color.name().toUpper());
         update();
@@ -247,13 +253,13 @@ ColorPickerHost::Instance()
 
 ColorPickerHost::ColorPickerHost()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
 ColorPickerHost::~ColorPickerHost()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
     Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
