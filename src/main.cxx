@@ -17,6 +17,10 @@
 
 int main(int argc, char *argv[])
 {
+    if( Hack::WhetherOneInstanceStarted<Hack::OS::Current>() == true ){
+        return 0;
+    }
+
     QApplication app(argc, argv);
 
     Hack::HideCursor<Hack::OS::Current>();

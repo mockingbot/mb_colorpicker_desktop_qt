@@ -142,4 +142,6 @@ namespace Hack
 
     DECLARE_FUNCTION_FOR_OS(void, HideCursor);
 
+    DECLARE_FUNCTION_FOR_OS(bool, WhetherOneInstanceStarted);
+
 }// namespace Hack

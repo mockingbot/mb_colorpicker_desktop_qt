@@ -369,3 +369,19 @@ void Hack::HideCursor<Hack::OS::Windows>()
     ::ShowCursor(FALSE);
 }
 
+
+template<>
+bool Hack::WhetherOneInstanceStarted<Hack::OS::Windows>()
+{
+    wchar_t secrite[] = L"ColorPicker4MoDao";
+
+    auto hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, secrite);
+
+    if( !hMutex ) {
+        hMutex = CreateMutex(0, 0, secrite);
+        return false;
+    } else {
+        return true; // The mutex exists so this is the second instance so return.
+    }
+}
+
