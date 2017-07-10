@@ -28,7 +28,7 @@ private:
     const QImage& m_current_capture_image;
 private:
     QColor m_current_color;
-    QLabel* m_color_info_label;
+    // QLabel* m_color_info_label;
 public:
     QColor currentColor() const
     {

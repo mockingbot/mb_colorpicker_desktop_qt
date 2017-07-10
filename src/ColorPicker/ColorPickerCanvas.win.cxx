@@ -86,12 +86,12 @@ class EventFilter: public QObject, public QAbstractNativeEventFilter
 public:
     EventFilter()
     {
-        printf("%s\n", __FUNCTION__);
+        // printf("%s\n", __FUNCTION__);
     }
 public:
     ~EventFilter()
     {
-        printf("%s\n", __FUNCTION__);
+        // printf("%s\n", __FUNCTION__);
     }
 public:
     bool nativeEventFilter(const QByteArray&, void*, long*) final override;
@@ -136,7 +136,7 @@ BOOL WINAPI TheMagnifierCallback(HWND,void*,MAGIMAGEHEADER,void*,MAGIMAGEHEADER,
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     if (FALSE == ::MagInitialize())
     {
@@ -148,7 +148,7 @@ void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     MAGNIFIER_UPDATE_TIMER->stop();
     // ::SendMessage(HWND_HOST, WM_DESTROY, 0, 0);
@@ -163,11 +163,11 @@ void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 template<>
 void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
 {
-    printf("%s\n", __FUNCTION__);
+    // printf("%s\n", __FUNCTION__);
 
     HWND_QT = HWND(winId);
 
-    std::cout << HWND_QT << " << HWND_QT \n";
+    // std::cout << HWND_QT << " << HWND_QT \n";
 
     auto event_filter = new EventFilter;
     qApp->installNativeEventFilter(event_filter);
@@ -202,7 +202,7 @@ void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
         printf("::CreateWindow HWND_HOST Failed\n");
         throw std::runtime_error("::CreateWindow HWND_HOST Failed");
     }
-    std::cout << HWND_HOST << " << HWND_HOST \n";
+    // std::cout << HWND_HOST << " << HWND_HOST \n";
 
     HWND_MAGNIFIER = ::CreateWindow(WC_MAGNIFIER,
                                     TEXT("MagnifierWidget"),
@@ -220,7 +220,7 @@ void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
         printf("::CreateWindow HWND_MAGNIFIER Failed\n");
         throw std::runtime_error("::CreateWindow HWND_MAGNIFIER Failed");
     }
-    std::cout << HWND_MAGNIFIER << " << HWND_MAGNIFIER \n";
+    // std::cout << HWND_MAGNIFIER << " << HWND_MAGNIFIER \n";
 
     if( FALSE == ::MagSetImageScalingCallback(HWND_MAGNIFIER, TheMagnifierCallback) )
     {

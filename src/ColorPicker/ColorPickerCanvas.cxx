@@ -82,7 +82,7 @@ ColorPickerCanvas::mousePressEvent(QMouseEvent* event)
     //                         .arg(m_current_color.blue())
     //                    );
 
-    qGuiApp->clipboard()->setText(m_current_color.name().toUpper());
+    // qGuiApp->clipboard()->setText(m_current_color.name().toUpper());
 
     // qDebug() << m_current_color.name().toUpper().toStdString() ;
     printf("%s\n", m_current_color.name().toUpper().toStdString().c_str());
