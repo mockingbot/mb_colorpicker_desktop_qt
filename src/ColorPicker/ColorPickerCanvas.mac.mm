@@ -181,3 +181,15 @@ void Hack::HideCursor<Hack::OS::macOS>()
     [NSCursor hide];
 }
 
+
+template<>
+bool Hack::WhetherOneInstanceStarted<Hack::OS::macOS>()
+{
+    if ([[NSRunningApplication runningApplicationsWithBundleIdentifier:
+                            [[NSBundle mainBundle] bundleIdentifier]] count] > 1) {
+        return true;
+    }
+
+    return false;
+}
+
