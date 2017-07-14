@@ -1,4 +1,4 @@
-#include "ColorPickerCanvas.hxx"
+#include "ColorPickerHost.hxx"
 
 #include <memory>
 #include <fstream>
@@ -86,12 +86,12 @@ class EventFilter: public QObject, public QAbstractNativeEventFilter
 public:
     EventFilter()
     {
-        // printf("%s\n", __FUNCTION__);
+        // qDebug() << __CURRENT_FUNCTION_NAME__;
     }
 public:
     ~EventFilter()
     {
-        // printf("%s\n", __FUNCTION__);
+        // qDebug() << __CURRENT_FUNCTION_NAME__;
     }
 public:
     bool nativeEventFilter(const QByteArray&, void*, long*) final override;
@@ -136,11 +136,11 @@ BOOL WINAPI TheMagnifierCallback(HWND,void*,MAGIMAGEHEADER,void*,MAGIMAGEHEADER,
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 
     if (FALSE == ::MagInitialize())
     {
-        printf("::MagInitialize Failed\n");
+        qDebug() << "::MagInitialize Failed\n";
         throw std::runtime_error("::MagInitialize Failed");
     }
 }
@@ -148,14 +148,14 @@ void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 
     MAGNIFIER_UPDATE_TIMER->stop();
     // ::SendMessage(HWND_HOST, WM_DESTROY, 0, 0);
 
     // if (FALSE == ::MagUninitialize())
     // {
-    //     printf("::MagUninitialize Failed %d\n", ::GetLastError());
+    //     qDebug() << "::MagUninitialize Failed %d\n", ::GetLastError());
     //     throw std::runtime_error("::MagUninitialize Failed");
     // }
 }
@@ -163,7 +163,7 @@ void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 template<>
 void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 
     HWND_QT = HWND(winId);
 
@@ -181,7 +181,7 @@ void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
                             int(window_class_name.size()) )
         )
     {
-        printf("::GetClassName Failed %d\n", ::GetLastError());
+        qDebug() << "::GetClassName Failed " << ::GetLastError();
         throw std::runtime_error("::GetClassName Failed");
     }
 
@@ -199,7 +199,7 @@ void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
                                  nullptr);
     if (!HWND_HOST)
     {
-        printf("::CreateWindow HWND_HOST Failed\n");
+        qDebug() << "::CreateWindow HWND_HOST Failed";
         throw std::runtime_error("::CreateWindow HWND_HOST Failed");
     }
     // std::cout << HWND_HOST << " << HWND_HOST \n";
@@ -217,14 +217,14 @@ void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
                                     nullptr );
     if (!HWND_MAGNIFIER)
     {
-        printf("::CreateWindow HWND_MAGNIFIER Failed\n");
+        qDebug() << "::CreateWindow HWND_MAGNIFIER Failed";
         throw std::runtime_error("::CreateWindow HWND_MAGNIFIER Failed");
     }
     // std::cout << HWND_MAGNIFIER << " << HWND_MAGNIFIER \n";
 
     if( FALSE == ::MagSetImageScalingCallback(HWND_MAGNIFIER, TheMagnifierCallback) )
     {
-        printf("::MagSetImageScalingCallback Failed\n");
+        qDebug() << "::MagSetImageScalingCallback Failed";
         throw std::runtime_error("::MagSetImageScalingCallback Failed");
     }
 
@@ -238,7 +238,7 @@ void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
                                               EXCLUDE_WINDOW_LIST )
           )
         {
-            printf("::MagSetWindowFilterList Failed\n");
+            qDebug() << "::MagSetWindowFilterList Failed";
             throw std::runtime_error("::MagSetWindowFilterList Failed");
         }
 
@@ -273,7 +273,7 @@ BOOL WINAPI TheMagnifierCallback(HWND hWnd, \
                                  RECT unclipped, RECT clipped, \
                                  HRGN dirty)
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
     // TRACK_CURSOR_PROCESS_START_STATE = true;
     // return true;
 
@@ -345,7 +345,7 @@ BOOL WINAPI TheMagnifierCallback(HWND hWnd, \
 
     std::free(pData);
 
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 
     // std::ofstream outfile ("new.bmp",std::ofstream::binary);
 
@@ -367,6 +367,13 @@ template<>
 void Hack::HideCursor<Hack::OS::Windows>()
 {
     ::ShowCursor(FALSE);
+}
+
+
+template<>
+void Hack::ShowCursor<Hack::OS::Windows>()
+{
+    ::ShowCursor(TRUE);
 }
 
 

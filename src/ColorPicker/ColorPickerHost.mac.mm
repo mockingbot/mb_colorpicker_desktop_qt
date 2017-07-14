@@ -1,4 +1,4 @@
-#include "ColorPickerCanvas.hxx"
+#include "ColorPickerHost.hxx"
 
 #include <atomic>
 
@@ -92,7 +92,7 @@ ScreenCaptureHost* capture_host = nullptr;
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
     if( capture_host == nullptr ){
         capture_host = new ScreenCaptureHost;
     }
@@ -101,7 +101,7 @@ void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
     if( capture_host != nullptr ){
         delete capture_host;
     }
@@ -161,6 +161,7 @@ ScreenCaptureHost::ScreenCaptureHost()
     //
     ,m_update_timer(new QTimer(this))
 {
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
     connect(m_update_timer, &QTimer::timeout, CaptureImageSurroundCursor);
 
     m_update_timer->setSingleShot(false);
@@ -170,7 +171,7 @@ ScreenCaptureHost::ScreenCaptureHost()
 
 ScreenCaptureHost::~ScreenCaptureHost()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +180,13 @@ template<>
 void Hack::HideCursor<Hack::OS::macOS>()
 {
     [NSCursor hide];
+}
+
+
+template<>
+void Hack::ShowCursor<Hack::OS::macOS>()
+{
+    [NSCursor unhide];
 }
 
 

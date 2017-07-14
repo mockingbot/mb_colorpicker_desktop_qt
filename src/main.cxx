@@ -2,8 +2,9 @@
 
 #include <QtCore/QtCore>
 
+#include "ColorPicker/DaemonModeHost.hxx"
 #include "ColorPicker/GlobalEventHook.hxx"
-#include "ColorPicker/ColorPickerCanvas.hxx"
+#include "ColorPicker/ColorPickerHost.hxx"
 
 
 #ifdef Q_OS_MAC
@@ -23,8 +24,6 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
-    Hack::HideCursor<Hack::OS::Current>();
-
     BootGlobalEventHook();
 
     auto screens = qGuiApp->screens();
@@ -33,7 +32,11 @@ int main(int argc, char *argv[])
         ColorPickerHost::InitColorPickerForScreen(screen);
     }
 
-    ColorPickerHost::SetColorPickerVisible();
+    if( ShouldStartInDaemonMode() == true ) {
+        DaemonServer::Start();
+    } else {
+        ColorPickerHost::SetColorPickerVisible();
+    }
 
     return app.exec();
 }

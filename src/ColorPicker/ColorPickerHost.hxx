@@ -6,12 +6,10 @@
 class ColorPickerCanvas: public QWidget
 {
     friend class ColorPickerHost;
-    Q_OBJECT
 private:
     ColorPickerCanvas();
     ~ColorPickerCanvas();
 private:
-    void mousePressEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
 private:
@@ -28,9 +26,8 @@ private:
     const QImage& m_current_capture_image;
 private:
     QColor m_current_color;
-    // QLabel* m_color_info_label;
 public:
-    QColor currentColor() const
+    const QColor& currentColor() const
     {
         return m_current_color;
     }
@@ -68,9 +65,10 @@ public:
 };
 
 
-class ColorPickerHost
+class ColorPickerHost: public QObject
 {
     friend class GlobalEventHook;
+    Q_OBJECT
 private:
     ColorPickerHost();
     ~ColorPickerHost();
@@ -88,15 +86,33 @@ public:
     static void SetColorPickerVisible(){
         return Instance()->setColorPickerVisible();
     }
+    static void SetColorPickerInvisible(){
+        return Instance()->setColorPickerInvisible();
+    }
 private:
     static void TraceMouseMove(const int x, const int y) {
         Instance()->traceMouseMove(x, y);
     }
+    static void TraceMouseButtonDown(const int x, const int y, const int mask) {
+        Instance()->traceMouseButtonDown(x, y, mask);
+    }
+    static void TraceMouseButtonUp(const int x, const int y, const int mask) {
+        Instance()->traceMouseButtonUp(x, y, mask);
+    }
 private:
     void initColorPickerForScreen(QScreen* screen);
     void setColorPickerVisible();
+    void setColorPickerInvisible();
+private:
+    auto currentColor() const {
+        return m_color_picker_canvas->currentColor();
+    }
 private:
     void traceMouseMove(const int x, const int y);
+    void traceMouseButtonDown(const int x, const int y, const int mask);
+    void traceMouseButtonUp(const int x, const int y, const int mask);
+private Q_SLOTS:
+    void GetFired(int value);
 };
 
 
@@ -141,6 +157,7 @@ namespace Hack
     DECLARE_FUNCTION_FOR_OS(void, GetCurrentCursorPosition, int*, int*);
 
     DECLARE_FUNCTION_FOR_OS(void, HideCursor);
+    DECLARE_FUNCTION_FOR_OS(void, ShowCursor);
 
     DECLARE_FUNCTION_FOR_OS(bool, WhetherOneInstanceStarted);
 

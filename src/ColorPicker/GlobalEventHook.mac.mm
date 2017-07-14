@@ -16,7 +16,28 @@ CGEventRef MouseEventCallback(CGEventTapProxy proxy, CGEventType type, \
     auto x = (int)mouseLocation.x;
     auto y = (int)mouseLocation.y;
 
-    GetGlobalEventHook()->MouseMove(x, y);
+    switch(type)
+    {
+        case kCGEventMouseMoved:
+            GetGlobalEventHook()->MouseMove(x, y);
+        break;
+        case kCGEventLeftMouseDown:
+            GetGlobalEventHook()->MouseButtonDown(x, y, 0);
+        break;
+        case kCGEventLeftMouseUp:
+            GetGlobalEventHook()->MouseButtonUp(x, y, 0);
+        break;
+        case kCGEventRightMouseDown:
+            GetGlobalEventHook()->MouseButtonDown(x, y, 0);
+        break;
+        case kCGEventRightMouseUp:
+            GetGlobalEventHook()->MouseButtonUp(x, y, 0);
+        break;
+        default:
+            qDebug() << "Get Unknow CGEventType\n";
+            throw std::runtime_error(std::string(__CURRENT_FUNCTION_NAME__)+" CGEventType Unknow");
+        break;
+    }
 
     return event;
 }
@@ -24,10 +45,14 @@ CGEventRef MouseEventCallback(CGEventTapProxy proxy, CGEventType type, \
 CFMachPortRef MOUSE_EVENT_TAP;
 CFRunLoopSourceRef EVENT_TAP_SRC_REF;
 
-void OS::Hack::HookMouse()
+void GlobalEventHook::HookMouse()
 {
-    // We only want one kind of event at the moment: The mouse has moved
-    auto emask = CGEventMaskBit(kCGEventMouseMoved);
+    CGEventMask emask = {0};
+    emask |= CGEventMaskBit(kCGEventRightMouseDown);
+    emask |= CGEventMaskBit(kCGEventRightMouseUp);
+    emask |= CGEventMaskBit(kCGEventLeftMouseDown);
+    emask |= CGEventMaskBit(kCGEventLeftMouseUp);
+    emask |= CGEventMaskBit(kCGEventMouseMoved);
 
     /*
      https://developer.apple.com/reference/coregraphics/1454426-cgeventtapcreate
@@ -55,7 +80,7 @@ void OS::Hack::HookMouse()
     );
 }
 
-void OS::Hack::UnhookMouse()
+void GlobalEventHook::UnhookMouse()
 {
     CFRunLoopRemoveSource(
         CFRunLoopGetCurrent(),

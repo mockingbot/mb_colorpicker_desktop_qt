@@ -12,19 +12,40 @@ LRESULT CALLBACK HookedMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     auto pMouseStruct = (MSLLHOOKSTRUCT*)lParam;
 
-    int x = pMouseStruct->pt.x;
-    int y = pMouseStruct->pt.y;
+    const int x = pMouseStruct->pt.x;
+    const int y = pMouseStruct->pt.y;
 
-    if( wParam == WM_MOUSEMOVE ){
-        GetGlobalEventHook()->MouseMove(x, y);
+    switch( wParam )
+    {
+        case WM_LBUTTONDOWN:
+            GetGlobalEventHook()->MouseButtonDown(x, y, 0);
+        break;
+        case WM_LBUTTONUP:
+            GetGlobalEventHook()->MouseButtonUp(x, y, 0);
+        break;
+        case WM_MOUSEMOVE:
+            GetGlobalEventHook()->MouseMove(x, y);
+        break;
+        case WM_MOUSEWHEEL:
+        break;
+        case WM_MOUSEHWHEEL:
+        break;
+        case WM_RBUTTONDOWN:
+            GetGlobalEventHook()->MouseButtonDown(x, y, 0);
+        break;
+        case WM_RBUTTONUP:
+            GetGlobalEventHook()->MouseButtonUp(x, y, 0);
+        break;
     }
 
     return ::CallNextHookEx(H_MOUSE_HOOK, nCode, wParam, lParam);
 }
 
 
-void OS::Hack::HookMouse()
+void GlobalEventHook::HookMouse()
 {
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+
     H_MOUSE_HOOK = ::SetWindowsHookEx(WH_MOUSE_LL, HookedMouseProc, NULL, 0);
     if( H_MOUSE_HOOK == NULL) {
         qDebug() << "HookMouse failed";
@@ -32,8 +53,10 @@ void OS::Hack::HookMouse()
 }
 
 
-void OS::Hack::UnhookMouse()
+void GlobalEventHook::UnhookMouse()
 {
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+
     if( ::UnhookWindowsHookEx(H_MOUSE_HOOK) == 0 )
     {
         qDebug() << "UnhookMouse failed";

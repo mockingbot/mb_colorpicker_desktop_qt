@@ -17,19 +17,23 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_executable(ColorPicker4MoDao MACOSX_BUNDLE src/main.cxx)
 endif()
 
+target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/DaemonModeHost.hxx)
+target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/DaemonModeHost.cxx)
 target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.hxx)
 target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.cxx)
-target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerCanvas.hxx)
-target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerCanvas.cxx)
+target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerHost.hxx)
+target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerHost.cxx)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/DaemonModeHost.win.cxx)
     target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.win.cxx)
-    target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerCanvas.win.cxx)
+    target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerHost.win.cxx)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/DaemonModeHost.mac.mm)
     target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/GlobalEventHook.mac.mm)
-    target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerCanvas.mac.mm)
+    target_sources(ColorPicker4MoDao PRIVATE src/ColorPicker/ColorPickerHost.mac.mm)
     set_target_properties(ColorPicker4MoDao PROPERTIES MACOSX_BUNDLE_INFO_PLIST
                           ${CMAKE_CURRENT_SOURCE_DIR}/res/Info.plist.in)
 endif()
@@ -50,12 +54,19 @@ smart_cute_add_resource(ColorPicker4MoDao res/resource.xml)
 # set our c++ compiler
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
+    add_definitions(-D__CURRENT_FUNCTION_NAME__=__FUNCTION__)
+else() # we thing its gcc or clang
+    add_definitions(-D__CURRENT_FUNCTION_NAME__=__PRETTY_FUNCTION__)
+endif()
+
+
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
 
     add_definitions(-DUNICODE)
     add_definitions(-D_UNICODE)
 
     set(C_FLAGS_COMM "/nologo /Zc:wchar_t- /Zc:strictStrings /MP /W3")
-    set(CXX_FLAGS_COMM "/nologo /Zc:wchar_t- /Zc:strictStrings /MP /W3 /GR /EHsc /std:c++14")
+    set(CXX_FLAGS_COMM "/nologo /Zc:wchar_t- /Zc:strictStrings /MP /W3 /GR /EHsc")
 
     set(C_FLAGS_DEBUG "/DDEBUG /MTd")
     set(CXX_FLAGS_DEBUG "/DDEBUG /MTd")

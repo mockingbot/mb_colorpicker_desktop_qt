@@ -9,23 +9,14 @@ private:
     ~GlobalEventHook();
 public:
     void MouseMove(const int x, const int y);
+    void MouseButtonUp(const int x, const int y, const int mask);
+    void MouseButtonDown(const int x, const int y, const int mask);
+public:
+    static void HookMouse();
+    static void UnhookMouse();
+    static void HookKeyboard();
+    static void UnhookKeyboard();
 };
 
 void BootGlobalEventHook();
 GlobalEventHook* GetGlobalEventHook();
-
-namespace OS
-{
-namespace Hack
-{
-
-void SetCursor();
-
-void HookMouse();
-void UnhookMouse();
-
-void HookKeyboard();
-void UnhookKeyboard();
-
-}// namespace Hack
-}// namespace OS

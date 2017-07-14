@@ -1,4 +1,6 @@
-#include "ColorPickerCanvas.hxx"
+#include "DaemonModeHost.hxx"
+#include "ColorPickerHost.hxx"
+
 
 const QImage& GetPictureSurroundedCurrentCursor()
 {
@@ -8,18 +10,19 @@ const QImage& GetPictureSurroundedCurrentCursor()
 }
 
 ColorPickerCanvas::ColorPickerCanvas()
-    :QWidget(nullptr, Qt::Tool)
+    // :QWidget(nullptr, Qt::Tool)
+    :QWidget(nullptr)
     //
     ,m_pixmap_circle_mask_x1(QPixmap(":/Res/CircleMask"))
     ,m_pixmap_circle_mask_x2(QPixmap(":/Res/CircleMask@2"))
     //
     ,m_pixmap_circle_mask(m_pixmap_circle_mask_x1)
     //
-    // ,m_color_info_label(new QLabel(this))
-    //
     ,m_current_capture_image(GetPictureSurroundedCurrentCursor())
     //
 {
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+
     setAutoFillBackground(false);
 
     setAttribute(Qt::WA_DeleteOnClose);
@@ -41,26 +44,9 @@ ColorPickerCanvas::ColorPickerCanvas()
     font.setPixelSize(13);
     setFont(font);
 
-    /*
-    m_color_info_label->resize(80, 20);
-    m_color_info_label->move((PANEL_WIDTH-80)/2, PANEL_HIGHT/2+40);
-    m_color_info_label->setAlignment(Qt::AlignCenter);
-
-    m_color_info_label->setStyleSheet("QLabel{"
-                                 // "    background-color : #E0101010;"
-                                 "    background-color : #F55D54;"
-                                 "    border: 1px solid #000000;"
-                                 "    border-radius: 10px;"
-                                 "    color: #E0FFFFFF;"
-                                 "}");
-
-    m_color_info_label->setVisible(true);
-    */
-
     auto update_timer = new QTimer(this);
     connect(update_timer, &QTimer::timeout, [=](){
         m_current_color = m_current_capture_image.pixelColor(18/2-1, 18/2-1);
-        // m_color_info_label->setText(m_current_color.name().toUpper());
         update();
     });
     update_timer->setSingleShot(false);
@@ -69,31 +55,17 @@ ColorPickerCanvas::ColorPickerCanvas()
 
 ColorPickerCanvas::~ColorPickerCanvas()
 {
-    // TODO:
-    // printf("%s\n", __FUNCTION__);
-}
-
-void
-ColorPickerCanvas::mousePressEvent(QMouseEvent* event)
-{
-    // qGuiApp->clipboard()->setText( QString("%1,%2,%3")
-    //                         .arg(m_current_color.red())
-    //                         .arg(m_current_color.green())
-    //                         .arg(m_current_color.blue())
-    //                    );
-
-    // qGuiApp->clipboard()->setText(m_current_color.name().toUpper());
-
-    // qDebug() << m_current_color.name().toUpper().toStdString() ;
-    printf("%s\n", m_current_color.name().toUpper().toStdString().c_str());
-
-    close();
-    qGuiApp->exit(0);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 }
 
 void
 ColorPickerCanvas::keyPressEvent(QKeyEvent* event)
 {
+    if( IsInDaemonMode() == true ){
+        ColorPickerHost::SetColorPickerInvisible();
+        return;
+    }
+
     if( event->key() == Qt::Key_Escape ){
         close();
         qGuiApp->exit(0);
@@ -203,12 +175,11 @@ ColorPickerCanvas::drawCaptureImage(QPainter& painter)
 void
 ColorPickerCanvas::setCircleClipRegion(QPainter& painter)
 {
-    QRegion circle_region;
+    const float center = PANEL_WIDTH/2.0;
+    const float radius = ZOOM_PIXEL_GRID_SIZE*(ZOOM_PIXEL_COUNT+1)/2.0 + 3;
 
-    float center = PANEL_WIDTH/2.0;
-    float radius = ZOOM_PIXEL_GRID_SIZE*(ZOOM_PIXEL_COUNT+1)/2.0 + 3;
-
-    circle_region = QRegion(QRect(center-radius, center-radius, radius*2, radius*2), QRegion::Ellipse);
+    static auto region_rect = QRect(center-radius, center-radius, radius*2, radius*2);
+    static auto circle_region = QRegion(region_rect, QRegion::Ellipse);
 
     painter.setClipRegion(circle_region);
 }
@@ -216,7 +187,7 @@ ColorPickerCanvas::setCircleClipRegion(QPainter& painter)
 void
 ColorPickerCanvas::paintEvent(QPaintEvent* event)
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
 
     QPainter painter(this);
     // painter.fillRect(rect(), Qt::red);
@@ -253,13 +224,13 @@ ColorPickerHost::Instance()
 
 ColorPickerHost::ColorPickerHost()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
     Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
 ColorPickerHost::~ColorPickerHost()
 {
-    // printf("%s\n", __FUNCTION__);
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
     Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
@@ -278,9 +249,12 @@ ColorPickerHost::initColorPickerForScreen(QScreen* screen)
 void
 ColorPickerHost::setColorPickerVisible()
 {
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+    Hack::HideCursor<Hack::OS::Current>();
+
     int x, y;
     Hack::GetCurrentCursorPosition<Hack::OS::Current>(&x, &y);
-
+    // qDebug() << x << y;
     for (int idx = 0; idx < m_screen_geometry_list.size(); ++idx)
     {
         if( m_screen_geometry_list[idx].contains(x, y) )
@@ -292,14 +266,31 @@ ColorPickerHost::setColorPickerVisible()
     }
 
     m_color_picker_canvas->moveCenterToPosition(x, y);
+    if( m_color_picker_canvas->isVisible() == true ){
+        return;
+    }
     m_color_picker_canvas->setVisible(true);
+}
 
-    Hack::SetWindowFocus<Hack::OS::Windows>(m_color_picker_canvas->winId());
+void
+ColorPickerHost::setColorPickerInvisible()
+{
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+    Hack::ShowCursor<Hack::OS::Current>();
+    if( m_color_picker_canvas->isVisible() == false ){
+        return;
+    }
+    m_color_picker_canvas->setVisible(false);
 }
 
 void
 ColorPickerHost::traceMouseMove(const int x, const int y)
 {
+    if( m_color_picker_canvas->isVisible() == false ){
+        return;
+    }
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+
     for (int idx = 0; idx < m_screen_geometry_list.size(); ++idx)
     {
         if( m_screen_geometry_list[idx].contains(x, y) )
@@ -311,12 +302,41 @@ ColorPickerHost::traceMouseMove(const int x, const int y)
     }
 
     m_color_picker_canvas->moveCenterToPosition(x, y);
+}
 
-    /*
-     * PATCH :
-     *   sometime, this window don't get focused
-     *   so, right now, we call SetWindowFocus while we move the mouse
-     */
-    Hack::SetWindowFocus<Hack::OS::Windows>(m_color_picker_canvas->winId());
+void
+ColorPickerHost::traceMouseButtonDown(const int x, const int y, const int mask)
+{
+    if( m_color_picker_canvas->isVisible() == false ){
+        return;
+    }
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+}
 
+void
+ColorPickerHost::traceMouseButtonUp(const int x, const int y, const int mask)
+{
+    if( m_color_picker_canvas->isVisible() == false ){
+        return;
+    }
+    // qDebug() << __CURRENT_FUNCTION_NAME__;
+
+    //qDebug() << currentColor().name().toUpper();
+    printf("%s\n", currentColor().name().toUpper().toStdString().c_str());
+    fflush(stdout);
+
+    if( IsInDaemonMode() == true ){
+        ColorPickerHost::SetColorPickerInvisible();
+        return;
+    }
+
+    m_color_picker_canvas->close();
+    qGuiApp->exit(0);
+}
+
+void
+ColorPickerHost::GetFired(int value)
+{
+    // qDebug() << __CURRENT_FUNCTION_NAME__ << value;
+    ColorPickerHost::SetColorPickerVisible();
 }
