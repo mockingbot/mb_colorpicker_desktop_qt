@@ -111,6 +111,8 @@ private:
     void traceMouseMove(const int x, const int y);
     void traceMouseButtonDown(const int x, const int y, const int mask);
     void traceMouseButtonUp(const int x, const int y, const int mask);
+private:
+    void onMousePickedEvent();
 private Q_SLOTS:
     void GetFired(int value);
 };

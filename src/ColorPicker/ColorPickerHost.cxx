@@ -10,8 +10,12 @@ const QImage& GetPictureSurroundedCurrentCursor()
 }
 
 ColorPickerCanvas::ColorPickerCanvas()
-    // :QWidget(nullptr, Qt::Tool)
+#ifdef Q_OS_WIN
+    :QWidget(nullptr, Qt::Tool)
+#endif
+#ifdef Q_OS_MAC
     :QWidget(nullptr)
+#endif
     //
     ,m_pixmap_circle_mask_x1(QPixmap(":/Res/CircleMask"))
     ,m_pixmap_circle_mask_x2(QPixmap(":/Res/CircleMask@2"))
@@ -311,6 +315,9 @@ ColorPickerHost::traceMouseButtonDown(const int x, const int y, const int mask)
         return;
     }
     // qDebug() << __CURRENT_FUNCTION_NAME__;
+#ifdef Q_OS_MAC
+    onMousePickedEvent();
+#endif // Q_OS_MAC
 }
 
 void
@@ -320,7 +327,21 @@ ColorPickerHost::traceMouseButtonUp(const int x, const int y, const int mask)
         return;
     }
     // qDebug() << __CURRENT_FUNCTION_NAME__;
+#ifdef Q_OS_WIN
+    onMousePickedEvent();
+#endif  // Q_OS_WIN
+}
 
+void
+ColorPickerHost::GetFired(int value)
+{
+    // qDebug() << __CURRENT_FUNCTION_NAME__ << value;
+    ColorPickerHost::SetColorPickerVisible();
+}
+
+void
+ColorPickerHost::onMousePickedEvent()
+{
     //qDebug() << currentColor().name().toUpper();
     printf("%s\n", currentColor().name().toUpper().toStdString().c_str());
     fflush(stdout);
@@ -332,11 +353,4 @@ ColorPickerHost::traceMouseButtonUp(const int x, const int y, const int mask)
 
     m_color_picker_canvas->close();
     qGuiApp->exit(0);
-}
-
-void
-ColorPickerHost::GetFired(int value)
-{
-    // qDebug() << __CURRENT_FUNCTION_NAME__ << value;
-    ColorPickerHost::SetColorPickerVisible();
 }
