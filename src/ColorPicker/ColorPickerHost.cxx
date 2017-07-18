@@ -65,6 +65,9 @@ ColorPickerCanvas::~ColorPickerCanvas()
 void
 ColorPickerCanvas::keyPressEvent(QKeyEvent* event)
 {
+    // fprintf(stderr, "%s\n", __CURRENT_FUNCTION_NAME__);
+    // fflush(stderr);
+
     if( IsInDaemonMode() == true ){
         ColorPickerHost::SetColorPickerInvisible();
         return;
@@ -274,6 +277,7 @@ ColorPickerHost::setColorPickerVisible()
         return;
     }
     m_color_picker_canvas->setVisible(true);
+    Hack::SetWindowFocus<Hack::OS::Current>(m_color_picker_canvas->winId());
 }
 
 void
@@ -306,6 +310,7 @@ ColorPickerHost::traceMouseMove(const int x, const int y)
     }
 
     m_color_picker_canvas->moveCenterToPosition(x, y);
+    Hack::SetWindowFocus<Hack::OS::Current>(m_color_picker_canvas->winId());
 }
 
 void
@@ -342,6 +347,9 @@ ColorPickerHost::GetFired(int value)
 void
 ColorPickerHost::onMousePickedEvent()
 {
+    // fprintf(stderr, "%s\n", __CURRENT_FUNCTION_NAME__);
+    // fflush(stderr);
+
     //qDebug() << currentColor().name().toUpper();
     printf("%s\n", currentColor().name().toUpper().toStdString().c_str());
     fflush(stdout);

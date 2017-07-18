@@ -12,7 +12,7 @@ const child_process = require('child_process')
 /**                                                                        ****/
 
 let color_picker_path = null
-console.log(os.arch())
+
 if( os.type() == "Darwin" ){
   color_picker_path = './dst/macOS/ColorPicker4MoDao.app/Contents/MacOS/ColorPicker4MoDao';
 } else {
@@ -23,15 +23,23 @@ if( os.type() == "Darwin" ){
   }
 }
 
+console.log(color_picker_path)
+
 let color_picker_callbacker = null;
 let color_picker_child_process = null;
 
 function bind_color_picker_callbacks(the_process) {
+
   the_process.stdout.on('data', function(data) {
     // this is where the picked color
     process.stdout.write(data);
     color_picker_callbacker.send('onColorPicked', data.toString())
   });
+
+  the_process.stderr.on('data', function(data) {
+    process.stdout.write(data);
+  });
+
 
   the_process.on('error', function () {
     console.log("ColorPicker Start Failed");
