@@ -19,6 +19,14 @@ void Hack::MakeWindowOverMenubar<Hack::OS::macOS>(WId window)
 /////////////////////////////////////////////////////////////////////////////////
 
 template<>
+void Hack::SetWindowFocus<Hack::OS::macOS>(WId window)
+{
+    [[NSApplication sharedApplication] activateIgnoringOtherApps: YES];
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+
+template<>
 void Hack::GetCurrentCursorPosition<Hack::OS::macOS>(int* x, int* y)
 {
     auto event = ::CGEventCreate(NULL);

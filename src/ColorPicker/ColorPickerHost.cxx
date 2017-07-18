@@ -68,12 +68,13 @@ ColorPickerCanvas::keyPressEvent(QKeyEvent* event)
     // fprintf(stderr, "%s\n", __CURRENT_FUNCTION_NAME__);
     // fflush(stderr);
 
+    if( event->key() != Qt::Key_Escape ){
+        return;
+    };
+
     if( IsInDaemonMode() == true ){
         ColorPickerHost::SetColorPickerInvisible();
-        return;
-    }
-
-    if( event->key() == Qt::Key_Escape ){
+    } else {
         close();
         qGuiApp->exit(0);
     }
@@ -288,6 +289,7 @@ ColorPickerHost::setColorPickerInvisible()
     if( m_color_picker_canvas->isVisible() == false ){
         return;
     }
+    Hack::ShowCursor<Hack::OS::Current>();
     m_color_picker_canvas->setVisible(false);
 }
 
