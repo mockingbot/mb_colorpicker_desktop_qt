@@ -37,9 +37,8 @@ function bind_color_picker_callbacks(the_process) {
   });
 
   the_process.stderr.on('data', function(data) {
-    process.stdout.write(data);
+    process.stdout.write(data); // <--------- used for debug
   });
-
 
   the_process.on('error', function () {
     console.log("ColorPicker Start Failed");

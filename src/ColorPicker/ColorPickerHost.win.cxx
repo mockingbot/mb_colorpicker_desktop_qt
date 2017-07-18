@@ -21,7 +21,12 @@
 template<>
 void Hack::SetWindowFocus<Hack::OS::Current>(WId window)
 {
+    // fprintf(stderr, "%s\n", __CURRENT_FUNCTION_NAME__);
+    // fflush(stderr);
+
+    ::SetActiveWindow(HWND(window));
     ::SetFocus(HWND(window));
+    ::SwitchToThisWindow(HWND(window), TRUE);
 }
 
 /////////////////////////////////////////////////////////////////////////////////

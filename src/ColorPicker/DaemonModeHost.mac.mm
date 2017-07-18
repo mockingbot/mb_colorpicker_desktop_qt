@@ -20,7 +20,8 @@ int32_t WaitForGetFired()
     auto read_pipe = std::bind(::read, pipe_handle, _1, _2);
     if( read_pipe(value_buffer, sizeof(T)) != sizeof(T) )
     {
-        qDebug() << __CURRENT_FUNCTION_NAME__ << "::read failed";
+        fprintf(stderr, "%s ::red failed\n", __CURRENT_FUNCTION_NAME__);
+        fflush(stderr);
         throw std::runtime_error(std::string(__CURRENT_FUNCTION_NAME__)+" ::read failed");
     }
 

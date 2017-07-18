@@ -277,6 +277,7 @@ ColorPickerHost::setColorPickerVisible()
     if( m_color_picker_canvas->isVisible() == true ){
         return;
     }
+
     m_color_picker_canvas->setVisible(true);
     Hack::SetWindowFocus<Hack::OS::Current>(m_color_picker_canvas->winId());
 }
@@ -289,7 +290,6 @@ ColorPickerHost::setColorPickerInvisible()
     if( m_color_picker_canvas->isVisible() == false ){
         return;
     }
-    Hack::ShowCursor<Hack::OS::Current>();
     m_color_picker_canvas->setVisible(false);
 }
 
@@ -358,9 +358,8 @@ ColorPickerHost::onMousePickedEvent()
 
     if( IsInDaemonMode() == true ){
         ColorPickerHost::SetColorPickerInvisible();
-        return;
+    } else {
+        m_color_picker_canvas->close();
+        qGuiApp->exit(0);
     }
-
-    m_color_picker_canvas->close();
-    qGuiApp->exit(0);
 }

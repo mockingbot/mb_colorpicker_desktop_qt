@@ -22,12 +22,14 @@ int32_t WaitForGetFired()
     auto read_pipe = std::bind(::ReadFile, pipe_handle, _1, _2, _3, _4);
     if( read_pipe(value_buffer, (DWORD)sizeof(T), &read_size, nullptr) != TRUE )
     {
-        printf(__CURRENT_FUNCTION_NAME__ "::ReadFile Failed 1\n");
+        fprintf(stderr, "%s ::ReadFile Failed 1\n", __CURRENT_FUNCTION_NAME__);
+        fflush(stderr);
         throw std::runtime_error(__CURRENT_FUNCTION_NAME__ "::ReadFile Failed 1\n");
     }
     if( read_size != sizeof(T) )
     {
-        printf(__CURRENT_FUNCTION_NAME__ "::ReadFile Failed 2\n");
+        fprintf(stderr, "%s ::ReadFile Failed 2\n", __CURRENT_FUNCTION_NAME__);
+        fflush(stderr);
         throw std::runtime_error(__CURRENT_FUNCTION_NAME__ "::ReadFile Failed 2\n");
     }
 
