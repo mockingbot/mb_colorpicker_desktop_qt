@@ -39,16 +39,19 @@ function bind_color_picker_callbacks(the_process) {
 
   the_process.on('close', function (code) {
     console.log('ColorPicker Exit ' + code);
-  });
-
-  the_process.stdout.on('end', function () {
-    console.log('ColorPicker STDOUT Done');
+    if( code == 0 ){
+      return;
+    }
+    // crashed!!!
+    console.log('ColorPicker Crashed!! Reload the process');
+    color_picker_child_process = child_process.spawn(color_picker_path, ['--daemon'])
+    console.log("ColorPicker PID: " + color_picker_child_process.pid)
+    bind_color_picker_callbacks(color_picker_child_process)
   });
 }
 
 color_picker_child_process = child_process.spawn(color_picker_path, ['--daemon'])
 console.log("ColorPicker PID: " + color_picker_child_process.pid)
-
 bind_color_picker_callbacks(color_picker_child_process)
 
 /**                                                                        ****/
