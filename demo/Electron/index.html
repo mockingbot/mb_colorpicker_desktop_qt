@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<title>ColorPicker</title>
+
+
+<!-- *********************************************************************** -->
+<!-- **************     this part for our color picker       *************** -->
+<!-- *****                                                          ******** -->
+<!-- ****                                                               **** -->
+
+<script>
+
+const {ipcRenderer} = require('electron')
+
+function buttonClicked() {
+  ipcRenderer.send('showColorPicker', true)
+}
+
+// NOTICE !!!
+// you should try to compare old color with this color
+// then do the next color process for performance reason
+ipcRenderer.on('onColorPicked', (event, arg) => {
+  console.log(arg) // arg is the color
+  document.getElementById("colorReulst").innerHTML = arg
+})
+
+</script>
+
+<!-- ****                                                               **** -->
+<!-- *********                                                     ********* -->
+<!-- ************************                           ******************** -->
+<!-- *********************************************************************** -->
+
+</head>
+
+<body>
+  <button onclick="buttonClicked()" > Test </button>
+  <div id="colorReulst"></div>
+</body>
+
+</html>
