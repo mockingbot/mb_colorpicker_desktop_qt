@@ -290,6 +290,7 @@ ColorPickerHost::setColorPickerInvisible()
     if( m_color_picker_canvas->isVisible() == false ){
         return;
     }
+    Hack::ShowCursor<Hack::OS::Current>(); // <--- FUCK!!! some must call twice
     m_color_picker_canvas->setVisible(false);
 }
 
