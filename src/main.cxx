@@ -18,11 +18,14 @@
 
 int main(int argc, char *argv[])
 {
-    if( Hack::WhetherOneInstanceStarted<Hack::OS::Current>() == true ){
-        return 0;
-    }
-
     QApplication app(argc, argv);
+
+    // don't check single instance on daemon mode
+    if( ShouldStartInDaemonMode() == false ) {
+        if( Hack::WhetherOneInstanceStarted<Hack::OS::Current>() == true ){
+            return 0;
+        }
+    };
 
     BootGlobalEventHook();
 

@@ -22,8 +22,6 @@ void DaemonThread::run()
     }
 }
 
-static bool daemon_mode_check = false;
-
 bool ShouldStartInDaemonMode()
 {
     auto the_check_function = []()->bool{
@@ -32,12 +30,13 @@ bool ShouldStartInDaemonMode()
 
         if( (arguments.size() == 2) && (arguments[1] == QString("--daemon")) ){
             // qDebug() << "Should Start In Daemon Mode";
-            daemon_mode_check = true;
+            return true;
         }
-        return daemon_mode_check;
+        return false;
     };
 
     static auto value = the_check_function();
+    // qDebug() << "ShouldStartInDaemonMode" << value;
     return value;
 }
 

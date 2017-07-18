@@ -2,6 +2,9 @@
 # exclude tmp build dir
 tmp/
 
+# exclude build result dir
+dst/
+
 # macOS
 .DS_Store
 

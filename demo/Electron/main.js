@@ -12,11 +12,15 @@ const child_process = require('child_process')
 /**                                                                        ****/
 
 let color_picker_path = null
-
+console.log(os.arch())
 if( os.type() == "Darwin" ){
-  color_picker_path = './tmp/build_mac/ColorPicker4MoDao.app/Contents/MacOS/ColorPicker4MoDao';
+  color_picker_path = './dst/macOS/ColorPicker4MoDao.app/Contents/MacOS/ColorPicker4MoDao';
 } else {
-  color_picker_path = 'tmp/build_win/ColorPicker4MoDao.exe';
+  if( os.arch() == 'x64') {
+    color_picker_path = './dst/Windows/x64/ColorPicker4MoDao.exe';
+  } else {
+    color_picker_path = './dst/Windows/x32/ColorPicker4MoDao.exe';
+  }
 }
 
 let color_picker_callbacker = null;
@@ -38,10 +42,7 @@ function bind_color_picker_callbacks(the_process) {
   });
 
   the_process.stdout.on('end', function () {
-    // some time ColorPicker might crash, so we just restart this
     console.log('ColorPicker STDOUT Done');
-    color_picker_child_process = child_process.spawn(color_picker_path, ['--daemon'])
-    bind_color_picker_callbacks(color_picker_child_process)
   });
 }
 

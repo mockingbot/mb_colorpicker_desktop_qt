@@ -39,6 +39,21 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set_target_properties(ColorPicker4MoDao PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dst/Windows/x64)
+    else()
+        set_target_properties(ColorPicker4MoDao PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dst/Windows/x32)
+    endif()
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    set_target_properties(ColorPicker4MoDao PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dst/macOS)
+endif()
+
 ################################################################################
 # using this handle Qt5 static link
 include(3rd/StaticQt5Base/SmartCute.cmake)
