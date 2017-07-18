@@ -24,9 +24,28 @@ void Hack::SetWindowFocus<Hack::OS::Current>(WId window)
     // fprintf(stderr, "%s\n", __CURRENT_FUNCTION_NAME__);
     // fflush(stderr);
 
-    ::SetActiveWindow(HWND(window));
-    ::SetFocus(HWND(window));
-    ::SwitchToThisWindow(HWND(window), TRUE);
+    // ::SetActiveWindow(HWND(window));
+    // ::SetFocus(HWND(window));
+    // ::SwitchToThisWindow(HWND(window), TRUE);
+
+    // https://stackoverflow.com/questions/688337
+    // how-do-i-force-my-app-to-come-to-the-front-and-take-focus
+
+    HWND hwnd = HWND(window);
+
+    auto crt_thread = ::GetCurrentThreadId();
+    auto fg_thread  = ::GetWindowThreadProcessId(::GetForegroundWindow(), NULL);
+
+    ::AttachThreadInput(crt_thread, fg_thread, TRUE);
+
+    // Possible actions you may wan to bring the window into focus.
+    ::SetForegroundWindow(hwnd);
+    ::SetCapture(hwnd);
+    ::SetFocus(hwnd);
+    ::SetActiveWindow(hwnd);
+    ::EnableWindow(hwnd, TRUE);
+
+    ::AttachThreadInput(crt_thread, fg_thread, FALSE);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
