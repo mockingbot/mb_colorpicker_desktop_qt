@@ -185,6 +185,18 @@ void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
 }
 
 template<>
+void Hack::EnableProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
+{
+    MAGNIFIER_UPDATE_TIMER->start();
+}
+
+template<>
+void Hack::DisableProcessForTrackPictureSurroundCursor<Hack::OS::Windows>()
+{
+    MAGNIFIER_UPDATE_TIMER->stop();
+}
+
+template<>
 void Hack::BootMagnificationHost<Hack::OS::Windows>(WId winId)
 {
     // qDebug() << __CURRENT_FUNCTION_NAME__;

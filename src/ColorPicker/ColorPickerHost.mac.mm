@@ -246,7 +246,7 @@ void CaptureImageSurroundCursor()
        {
             auto origin_pixel_color = captured_image.pixelColor(x, y);
             auto fixed_pixel_color = FixColorSpace(origin_pixel_color, cursor_position);
-            qDebug() << origin_pixel_color << fixed_pixel_color;
+            // qDebug() << origin_pixel_color << fixed_pixel_color;
             captured_image.setPixelColor(x, y, fixed_pixel_color);
        }
     }
