@@ -17,6 +17,8 @@ ColorPickerCanvas::ColorPickerCanvas()
     :QWidget(nullptr)
 #endif
     //
+    ,m_update_timer(new QTimer(this))
+    //
     ,m_pixmap_circle_mask_x1(QPixmap(":/Res/CircleMask"))
     ,m_pixmap_circle_mask_x2(QPixmap(":/Res/CircleMask@2"))
     //
@@ -48,13 +50,12 @@ ColorPickerCanvas::ColorPickerCanvas()
     font.setPixelSize(13);
     setFont(font);
 
-    auto update_timer = new QTimer(this);
-    connect(update_timer, &QTimer::timeout, [=](){
+    connect(m_update_timer, &QTimer::timeout, [=](){
         m_current_color = m_current_capture_image.pixelColor(18/2-1, 18/2-1);
         update();
     });
-    update_timer->setSingleShot(false);
-    update_timer->start(50); // 20 hz
+    m_update_timer->setSingleShot(false);
+    m_update_timer->start(50); // 20 hz
 }
 
 ColorPickerCanvas::~ColorPickerCanvas()
@@ -252,6 +253,9 @@ ColorPickerHost::initColorPickerForScreen(QScreen* screen)
     m_screen_device_pixel_ratio_list.push_back(screen->devicePixelRatio());
 
     // qDebug() << screen << screen->geometry() << screen->devicePixelRatio();
+    if( IsInDaemonMode() == true ){
+        ColorPickerHost::SetColorPickerInvisible();
+    } 
 }
 
 void
@@ -274,24 +278,20 @@ ColorPickerHost::setColorPickerVisible()
     }
 
     m_color_picker_canvas->moveCenterToPosition(x, y);
-    if( m_color_picker_canvas->isVisible() == true ){
-        return;
-    }
 
     m_color_picker_canvas->setVisible(true);
     Hack::SetWindowFocus<Hack::OS::Current>(m_color_picker_canvas->winId());
+    Hack::EnableProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
 }
 
 void
 ColorPickerHost::setColorPickerInvisible()
 {
     // qDebug() << __CURRENT_FUNCTION_NAME__;
-    Hack::ShowCursor<Hack::OS::Current>();
-    if( m_color_picker_canvas->isVisible() == false ){
-        return;
-    }
-    Hack::ShowCursor<Hack::OS::Current>(); // <--- FUCK!!! some must call twice
+
+    Hack::DisableProcessForTrackPictureSurroundCursor<Hack::OS::Current>();
     m_color_picker_canvas->setVisible(false);
+    Hack::ShowCursor<Hack::OS::Current>();
 }
 
 void

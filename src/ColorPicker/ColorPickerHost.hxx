@@ -13,6 +13,18 @@ private:
     void keyPressEvent(QKeyEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
 private:
+    QTimer* m_update_timer;
+private:
+    void setVisible(bool visible) override
+    {
+        if(visible){
+            m_update_timer->start();
+        } else {
+            m_update_timer->stop();
+        }
+        QWidget::setVisible(visible);
+    }
+private:
     const QPixmap m_pixmap_circle_mask_x1;
     const QPixmap m_pixmap_circle_mask_x2;
 private:
@@ -152,6 +164,8 @@ namespace Hack
     DECLARE_FUNCTION_FOR_OS(void, BootMagnificationHost, WId);
     DECLARE_FUNCTION_FOR_OS(void, BootProcessForTrackPictureSurroundCursor);
     DECLARE_FUNCTION_FOR_OS(void, ShutdonwProcessForTrackPictureSurroundCursor);
+    DECLARE_FUNCTION_FOR_OS(void, EnableProcessForTrackPictureSurroundCursor);
+    DECLARE_FUNCTION_FOR_OS(void, DisableProcessForTrackPictureSurroundCursor);
 
     DECLARE_FUNCTION_FOR_OS(bool, IsTrackCursorProcessStarted);
     DECLARE_FUNCTION_FOR_OS(void, GetPictureSurroundedCurrentCursor, QImage**);

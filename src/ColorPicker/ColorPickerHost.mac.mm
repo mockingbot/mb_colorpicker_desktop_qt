@@ -93,6 +93,9 @@ public:
     ~ScreenCaptureHost();
 private:
     QTimer* m_update_timer;
+public:
+    void stopUpdateTimer();
+    void startUpdateTimer();
 };
 
 ScreenCaptureHost* capture_host = nullptr;
@@ -138,8 +141,20 @@ void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
     for(uint32_t idx=0; idx < display_count; ++idx){
         CGColorSpaceRelease(display_color_space_list[idx]);
     }
-
 }
+
+template<>
+void Hack::EnableProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
+{
+    capture_host->startUpdateTimer();
+}
+
+template<>
+void Hack::DisableProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
+{
+    capture_host->stopUpdateTimer();
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 QColor FixColorSpace(const QColor& origin_pixel_color, const CGPoint& cursor_position)
 {
@@ -257,6 +272,18 @@ ScreenCaptureHost::ScreenCaptureHost()
 ScreenCaptureHost::~ScreenCaptureHost()
 {
     // qDebug() << __CURRENT_FUNCTION_NAME__;
+}
+
+void
+ScreenCaptureHost::startUpdateTimer()
+{
+    m_update_timer->start();
+}
+
+void
+ScreenCaptureHost::stopUpdateTimer()
+{
+    m_update_timer->stop();
 }
 
 /////////////////////////////////////////////////////////////////////////////////
