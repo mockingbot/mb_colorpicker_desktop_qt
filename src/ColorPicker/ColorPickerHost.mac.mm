@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <AppKit/AppKit.h>
+#include <CoreGraphics/CoreGraphics.h>
 
 #include <QtMacExtras/QtMacExtras>
 
@@ -96,23 +97,48 @@ private:
 
 ScreenCaptureHost* capture_host = nullptr;
 
+const uint32_t display_id_list_size = 16; // 16 display is enought
+uint32_t display_count = 0;
+CGDirectDisplayID display_id_list[display_id_list_size] = {}; 
+CGColorSpaceRef display_color_space_list[display_id_list_size] = {}; 
+CGRect display_bound_list[display_id_list_size] = {}; 
+NSColorSpace* color_space_sRGB;
 
 template<>
 void Hack::BootProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 {
     // qDebug() << __CURRENT_FUNCTION_NAME__;
-    if( capture_host == nullptr ){
-        capture_host = new ScreenCaptureHost;
+    if( capture_host != nullptr ){
+        return;
     }
+    capture_host = new ScreenCaptureHost;
+    if( kCGErrorSuccess != CGGetActiveDisplayList(16, display_id_list, &display_count) ){
+        qDebug() << "CGGetActiveDisplayList failed\n";
+        throw std::runtime_error("CGGetActiveDisplayList Failed\n");
+    }
+    for(uint32_t idx=0; idx < display_count; ++idx){
+        display_color_space_list[idx] = CGDisplayCopyColorSpace(display_id_list[idx]);
+        display_bound_list[idx] = CGDisplayBounds(display_id_list[idx]);
+        //qDebug() << display_bound_list[idx].origin.x ;
+        //qDebug() << display_bound_list[idx].origin.y ;
+        //qDebug() << display_bound_list[idx].size.width ;
+        //qDebug() << display_bound_list[idx].size.height ;
+    }
+    color_space_sRGB = [NSColorSpace sRGBColorSpace];
 }
 
 template<>
 void Hack::ShutdonwProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 {
     // qDebug() << __CURRENT_FUNCTION_NAME__;
-    if( capture_host != nullptr ){
-        delete capture_host;
+    if( capture_host == nullptr ){
+        return;
     }
+    delete capture_host;
+    for(uint32_t idx=0; idx < display_count; ++idx){
+        CGColorSpaceRelease(display_color_space_list[idx]);
+    }
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +146,6 @@ void CaptureImageSurroundCursor()
 {
     auto window_list = ::CGWindowListCreate(kCGWindowListOptionOnScreenOnly, \
                                             kCGNullWindowID);
-
     auto window_list_size = ::CFArrayGetCount(window_list);
 
     auto window_list_filtered = ::CFArrayCreateMutableCopy(kCFAllocatorDefault, \
@@ -144,8 +169,9 @@ void CaptureImageSurroundCursor()
     }
 
     NSRect rect;
+    CGPoint cursor_position;
     auto event = ::CGEventCreate(NULL);
-    rect.origin = ::CGEventGetLocation(event);
+    rect.origin = cursor_position = ::CGEventGetLocation(event);
     rect.origin.x = int(rect.origin.x) - CAPTURE_WIDTH/2;
     rect.origin.y = int(rect.origin.y) - CAPTURE_HIGHT/2;
     rect.size.width = CAPTURE_WIDTH;
@@ -154,14 +180,56 @@ void CaptureImageSurroundCursor()
 
     auto image = ::CGWindowListCreateImageFromArray(rect, window_list_filtered, \
                                                     kCGWindowImageNominalResolution);
-
-    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = QtMac::fromCGImageRef(image).toImage();
-
-    TRACK_CURSOR_PROCESS_START_STATE = true;
-
-    ::CGImageRelease(image);
     ::CFRelease(window_list_filtered);
     ::CFRelease(window_list);
+    auto captured_image = QtMac::fromCGImageRef(image).toImage();
+    ::CGImageRelease(image);
+
+    uint32_t display_id_idx = -1;
+    for(uint32_t idx=0; idx < display_count; ++idx){
+        const auto& rect = display_bound_list[idx];
+        if( true == CGRectContainsPoint(rect, cursor_position) ){
+            display_id_idx = idx;
+            break;
+        }
+    }
+
+    static CGFloat color_values[] = {0/255.f, 0/255.f, 0/255.f, 1.0f};
+    auto current_display_color_space = display_color_space_list[display_id_idx];
+    // fix color space here
+    /**/
+    for(int y = 0; y < CAPTURE_HIGHT; ++y)
+    {
+       for(int x = 0; x < CAPTURE_WIDTH; ++x)
+       {
+            auto origin_pixel_color = captured_image.pixelColor(x, y);
+            color_values[0] = origin_pixel_color.redF();
+            color_values[1] = origin_pixel_color.greenF();
+            color_values[2] = origin_pixel_color.blueF();
+
+            auto tmp_color = CGColorCreate(current_display_color_space, color_values);
+            auto color = [NSColor colorWithCGColor: tmp_color];
+            CGColorRelease(tmp_color);
+
+            // auto color_space_sRGB = [NSColorSpace sRGBColorSpace];
+            auto fixed_color = [color colorUsingColorSpace: color_space_sRGB];
+            // [color release];
+
+            auto fixed_red = [fixed_color redComponent];
+            auto fixed_green = [fixed_color greenComponent];
+            auto fixed_blue = [fixed_color blueComponent];
+            [fixed_color release];
+
+            auto fixed_pixel_color = QColor::fromRgbF(fixed_red, fixed_green, fixed_blue);
+            captured_image.setPixelColor(x, y, fixed_pixel_color);
+            qDebug() << origin_pixel_color << fixed_pixel_color;
+       }
+    }
+    /**/
+    
+    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = captured_image;
+
+    TRACK_CURSOR_PROCESS_START_STATE = true;
 }
 
 ScreenCaptureHost::ScreenCaptureHost()
