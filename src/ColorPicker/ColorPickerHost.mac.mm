@@ -102,9 +102,9 @@ ScreenCaptureHost* capture_host = nullptr;
 
 const uint32_t display_id_list_size = 16; // 16 display is enought
 uint32_t display_count = 0;
-CGDirectDisplayID display_id_list[display_id_list_size] = {}; 
-CGColorSpaceRef display_color_space_list[display_id_list_size] = {}; 
-CGRect display_bound_list[display_id_list_size] = {}; 
+CGDirectDisplayID display_id_list[display_id_list_size] = {};
+CGColorSpaceRef display_color_space_list[display_id_list_size] = {};
+CGRect display_bound_list[display_id_list_size] = {};
 NSColorSpace* color_space_sRGB;
 
 template<>
@@ -156,24 +156,14 @@ void Hack::DisableProcessForTrackPictureSurroundCursor<Hack::OS::macOS>()
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-QColor FixColorSpace(const QColor& origin_pixel_color, const CGPoint& cursor_position)
+QColor FixColorSpace(const QColor& origin_pixel_color, CGColorSpaceRef origin_color_space)
 {
-    uint32_t display_id_idx = -1;
-    for(uint32_t idx=0; idx < display_count; ++idx){
-        const auto& rect = display_bound_list[idx];
-        if( true == CGRectContainsPoint(rect, cursor_position) ){
-            display_id_idx = idx;
-            break;
-        }
-    }
-    auto current_display_color_space = display_color_space_list[display_id_idx];
-
     CGFloat color_values[] = {0/255.f, 0/255.f, 0/255.f, 1.0f};
     color_values[0] = origin_pixel_color.redF();
     color_values[1] = origin_pixel_color.greenF();
     color_values[2] = origin_pixel_color.blueF();
 
-    auto tmp_color = CGColorCreate(current_display_color_space, color_values);
+    auto tmp_color = CGColorCreate(origin_color_space, color_values);
     CGFloat fixed_red, fixed_blue, fixed_green;
 
     @autoreleasepool {
@@ -190,7 +180,6 @@ QColor FixColorSpace(const QColor& origin_pixel_color, const CGPoint& cursor_pos
 
     CGColorRelease(tmp_color);
 
-    // QColor fixed_pixel_color = origin_pixel_color;
     return fixed_pixel_color;
 }
 
@@ -231,27 +220,43 @@ void CaptureImageSurroundCursor()
     rect.size.height = CAPTURE_HIGHT;
     ::CFRelease(event);
 
-    auto image = ::CGWindowListCreateImageFromArray(rect, window_list_filtered, \
+    auto cg_image = ::CGWindowListCreateImageFromArray(rect, window_list_filtered, \
                                                     kCGWindowImageNominalResolution);
-    ::CFRelease(window_list_filtered);
-    ::CFRelease(window_list);
-    auto captured_image = QtMac::fromCGImageRef(image).toImage();
-    ::CGImageRelease(image);
 
+    auto ns_bitmap_image = [[NSBitmapImageRep alloc] initWithCGImage: cg_image];
+
+    uint32_t display_id_idx = -1;
+    for(uint32_t idx=0; idx < display_count; ++idx){
+        const auto& rect = display_bound_list[idx];
+        if( true == CGRectContainsPoint(rect, cursor_position) ){
+            display_id_idx = idx;
+            break;
+        }
+    }
+    auto current_display_color_space = display_color_space_list[display_id_idx];
 
     // fix color space here
     for(int y = 0; y < CAPTURE_HIGHT; ++y)
     {
        for(int x = 0; x < CAPTURE_WIDTH; ++x)
        {
-            auto origin_pixel_color = captured_image.pixelColor(x, y);
-            auto fixed_pixel_color = FixColorSpace(origin_pixel_color, cursor_position);
-            // qDebug() << origin_pixel_color << fixed_pixel_color;
-            captured_image.setPixelColor(x, y, fixed_pixel_color);
+            auto color = [ns_bitmap_image colorAtX: x y: y];
+            auto red   = [color redComponent  ];
+            auto green = [color greenComponent];
+            auto blue  = [color blueComponent ];
+            auto origin_pixel_color = QColor::fromRgbF(red, green, blue);
+
+            auto fixed_pixel_color = FixColorSpace(origin_pixel_color, \
+                                                    current_display_color_space);
+            CAPTURED_SURROUND_CURSOR_IMAGE_PTR->setPixelColor(x, y, fixed_pixel_color);
        }
     }
-    
-    (*CAPTURED_SURROUND_CURSOR_IMAGE_PTR) = captured_image;
+
+    [ns_bitmap_image release];
+
+    ::CFRelease(window_list_filtered);
+    ::CFRelease(window_list);
+    ::CGImageRelease(cg_image);
 
     TRACK_CURSOR_PROCESS_START_STATE = true;
 }
