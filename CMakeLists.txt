@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
 
-
 ################################################################################
 # define our project
 project(ColorPicker4MoDao)
@@ -56,12 +55,22 @@ endif()
 
 ################################################################################
 # using this handle Qt5 static link
-include(3rd/StaticQt5Base/SmartCute.cmake)
+include(SmartCute.cmake)
 # I don't like qt keywords
 add_definitions(-DQT_NO_KEYWORDS)
-# auto generate moc files for the target
-smart_cute_static_link(ColorPicker4MoDao)
-smart_cute_static_link_os_extra(ColorPicker4MoDao)
+
+smart_cute_link(ColorPicker4MoDao RELEASE Core Gui Widgets)
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    smart_cute_link(ColorPicker4MoDao RELEASE platforms/qwindows)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    smart_cute_link(ColorPicker4MoDao RELEASE platforms/qcocoa)
+endif()
+
+set_target_properties(ColorPicker4MoDao PROPERTIES LINK_FLAGS "/SUBSYSTEM:Console")
+
 # auto generate resource files for the target
 smart_cute_add_resource(ColorPicker4MoDao res/resource.xml)
 
@@ -83,11 +92,19 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     set(C_FLAGS_COMM "/nologo /Zc:wchar_t- /Zc:strictStrings /MP /W3")
     set(CXX_FLAGS_COMM "/nologo /Zc:wchar_t- /Zc:strictStrings /MP /W3 /GR /EHsc")
 
-    set(C_FLAGS_DEBUG "/DDEBUG /MTd")
-    set(CXX_FLAGS_DEBUG "/DDEBUG /MTd")
+    if(QT_FRAMEWORK_IS_STATIC_RUNTIME_LIB)
+        set(C_FLAGS_DEBUG "/DDEBUG /MTd")
+        set(CXX_FLAGS_DEBUG "/DDEBUG /MTd")
 
-    set(C_FLAGS_RELEASE "/DNDEBUG /MT")
-    set(CXX_FLAGS_RELEASE "/DNDEBUG /MT")
+        set(C_FLAGS_RELEASE "/DNDEBUG /MT")
+        set(CXX_FLAGS_RELEASE "/DNDEBUG /MT")
+    else()
+        set(C_FLAGS_DEBUG "/DDEBUG /MDd")
+        set(CXX_FLAGS_DEBUG "/DDEBUG /MDd")
+
+        set(C_FLAGS_RELEASE "/DNDEBUG /MD")
+        set(CXX_FLAGS_RELEASE "/DNDEBUG /MD")
+    endif()
 
     set(LINKER_FLAGS_COMM "/NOLOGO /DYNAMICBASE /NXCOMPAT /INCREMENTAL:NO /DEBUG")
 

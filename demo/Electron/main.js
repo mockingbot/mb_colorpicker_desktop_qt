@@ -71,7 +71,12 @@ bind_color_picker_callbacks(color_picker_child_process)
 let mainWindow = null
 
 function createWindow () {
-  mainWindow = new electron.BrowserWindow({width: 800, height: 600})
+  mainWindow = new electron.BrowserWindow({
+      width: 800, height: 600,
+      webPreferences : {
+        nodeIntegration: true
+      }
+    })
 
   mainWindow.setMenu(null)
 
@@ -108,7 +113,7 @@ electron.app.on('activate', () => {
 /**                                                                        ****/
 
 electron.ipcMain.on('showColorPicker', (event, arg) => {
-  let contents = new Buffer(4);
+  let contents = new Buffer.alloc(4);
   contents[0] = 0x01;
   contents[1] = 0x02;
   contents[2] = 0x03;

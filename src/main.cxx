@@ -7,6 +7,8 @@
 #include "ColorPicker/ColorPickerHost.hxx"
 
 
+#ifdef QT_FRAMEWORK_IS_STATIC_LIB
+
 #ifdef Q_OS_MAC
     Q_IMPORT_PLUGIN(QCocoaIntegrationPlugin);
 #endif // Q_OS_MAC
@@ -15,6 +17,7 @@
     Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin);
 #endif // Q_OS_WIN
 
+#endif // QT_FRAMEWORK_IS_STATIC_LIB
 
 int main(int argc, char *argv[])
 {
