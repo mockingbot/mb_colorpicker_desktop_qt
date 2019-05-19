@@ -34,9 +34,13 @@ function buttonClicked() {
 var color_picker_path = '';
 
 if( os.type() == "Darwin" ){
-  color_picker_path = './tmp/build_mac/ColorPicker4MoDao.app/Contents/MacOS/ColorPicker4MoDao';
+  color_picker_path = './dst/macOS/ColorPicker4MoDao.app/Contents/MacOS/ColorPicker4MoDao';
 } else {
-  color_picker_path = 'tmp/build_win/ColorPicker4MoDao.exe';
+  if( os.arch() == 'x64') {
+    color_picker_path = './dst/Windows/x64/ColorPicker4MoDao.exe';
+  } else {
+    color_picker_path = './dst/Windows/x32/ColorPicker4MoDao.exe';
+  }
 }
 
 var color_picker = child_process.spawn(color_picker_path, ['--daemon']);
@@ -68,7 +72,7 @@ color_picker.stdout.on('end', function () {
 });
 
 
-var contents = new Buffer(4);
+var contents = new Buffer.alloc(4);
 contents[0] = 0x01;
 contents[1] = 0x02;
 contents[2] = 0x03;
